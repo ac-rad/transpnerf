@@ -1,0 +1,13 @@
+[project]
+name = "transpnerf"
+description = "Transparent Neural Rendering using Nerfacto Baseline"
+version = "0.1.0"
+
+dependencies = ["nerfstudio >= 0.3.0"] 
+
+[tool.setuptools.packages.find]
+include = ["transpnerf*"]
+
+# register the entry point of your new method here:
+[project.entry-points.'nerfstudio.method_configs']
+transpnerf = 'transpnerf.transpnerf_config:transpnerf_method'
