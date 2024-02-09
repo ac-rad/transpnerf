@@ -42,7 +42,7 @@ transpnerf_method = MethodSpecification(
             ),
             model=TranspNerfModelConfig(
                 eval_num_rays_per_chunk=1 << 15,
-                camera_optimizer=CameraOptimizerConfig(mode="SO3xR3"),
+                camera_optimizer=CameraOptimizerConfig(mode="off"), #SO3xR3 for nerfstudiodataparser
             ),
         ),
         optimizers={
