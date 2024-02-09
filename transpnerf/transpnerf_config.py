@@ -15,6 +15,7 @@ from transpnerf.transpnerf_model import TranspNerfModelConfig
 # )
 from nerfstudio.configs.base_config import ViewerConfig
 from nerfstudio.data.dataparsers.nerfstudio_dataparser import NerfstudioDataParserConfig
+from transpnerf.transpnerf_pipeline import TranspNerfDataParserConfig
 from nerfstudio.engine.optimizers import AdamOptimizerConfig, RAdamOptimizerConfig
 from nerfstudio.engine.schedulers import (
     ExponentialDecaySchedulerConfig,
@@ -34,7 +35,7 @@ transpnerf_method = MethodSpecification(
         mixed_precision=True,
         pipeline=VanillaPipelineConfig(
             datamanager=ParallelDataManagerConfig(
-                dataparser=NerfstudioDataParserConfig(),
+                dataparser=TranspNerfDataParserConfig(), #NerfstudioDataParserConfig(), 
                 train_num_rays_per_batch=4096,
                 eval_num_rays_per_batch=4096,
             ),
