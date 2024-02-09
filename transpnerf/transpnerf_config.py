@@ -36,7 +36,7 @@ transpnerf_method = MethodSpecification(
         mixed_precision=True,
         pipeline=VanillaPipelineConfig(
             datamanager=ParallelDataManagerConfig(
-                dataparser=BlenderDataParserConfig(),#TranspNerfDataParserConfig(), #NerfstudioDataParserConfig(), 
+                dataparser=NerfstudioDataParserConfig(),#TranspNerfDataParserConfig(), #NerfstudioDataParserConfig(), 
                 train_num_rays_per_batch=4096,
                 eval_num_rays_per_batch=4096,
             ),
