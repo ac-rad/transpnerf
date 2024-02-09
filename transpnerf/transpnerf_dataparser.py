@@ -25,13 +25,14 @@ import torch
 
 from nerfstudio.cameras.cameras import Cameras, CameraType
 from nerfstudio.data.dataparsers.base_dataparser import DataParser, DataParserConfig, DataparserOutputs
+from nerfstudio.data.dataparsers.blender_dataparser.BlenderDataParserConfig import BlenderDataParserConfig, Blender
 from nerfstudio.data.scene_box import SceneBox
 from nerfstudio.utils.colors import get_color
 from nerfstudio.utils.io import load_from_json
 
 
 @dataclass
-class TranspNerfDataParserConfig(DataParserConfig):
+class TranspNerfDataParserConfig(BlenderDataParserConfig):
     """Blender dataset parser config"""
 
     _target: Type = field(default_factory=lambda: TranspNerfData)
@@ -45,7 +46,7 @@ class TranspNerfDataParserConfig(DataParserConfig):
 
 
 @dataclass
-class TranspNerfData(DataParser):
+class TranspNerfData(Blender):
     """Blender Dataset
     Some of this code comes from https://github.com/yenchenlin/nerf-pytorch/blob/master/load_blender.py#L37.
     """
