@@ -101,12 +101,12 @@ class TranspNerf(DataParser):
         depth_filenames = []
         poses = []
 
-        fx_fixed = "fl_x" in meta
-        fy_fixed = "fl_y" in meta
-        cx_fixed = "cx" in meta
-        cy_fixed = "cy" in meta
-        height_fixed = "h" in meta
-        width_fixed = "w" in meta
+        # fx_fixed = "fl_x" in meta
+        # fy_fixed = "fl_y" in meta
+        # cx_fixed = "cx" in meta
+        # cy_fixed = "cy" in meta
+        # height_fixed = "h" in meta
+        # width_fixed = "w" in meta
         distort_fixed = False
         for distort_key in ["k1", "k2", "k3", "p1", "p2", "distortion_params"]:
             if distort_key in meta:
@@ -136,37 +136,37 @@ class TranspNerf(DataParser):
             # filepath = Path(frame["file_path"])
             # fname = self._get_fname(filepath, data_dir)
 
-            if not fx_fixed:
-                assert "fl_x" in frame, "fx not specified in frame"
-                fx.append(float(frame["fl_x"]))
-            if not fy_fixed:
-                assert "fl_y" in frame, "fy not specified in frame"
-                fy.append(float(frame["fl_y"]))
-            if not cx_fixed:
-                assert "cx" in frame, "cx not specified in frame"
-                cx.append(float(frame["cx"]))
-            if not cy_fixed:
-                assert "cy" in frame, "cy not specified in frame"
-                cy.append(float(frame["cy"]))
-            if not height_fixed:
-                assert "h" in frame, "height not specified in frame"
-                height.append(int(frame["h"]))
-            if not width_fixed:
-                assert "w" in frame, "width not specified in frame"
-                width.append(int(frame["w"]))
-            if not distort_fixed:
-                distort.append(
-                    torch.tensor(frame["distortion_params"], dtype=torch.float32)
-                    if "distortion_params" in frame
-                    else camera_utils.get_distortion_params(
-                        k1=float(frame["k1"]) if "k1" in frame else 0.0,
-                        k2=float(frame["k2"]) if "k2" in frame else 0.0,
-                        k3=float(frame["k3"]) if "k3" in frame else 0.0,
-                        k4=float(frame["k4"]) if "k4" in frame else 0.0,
-                        p1=float(frame["p1"]) if "p1" in frame else 0.0,
-                        p2=float(frame["p2"]) if "p2" in frame else 0.0,
-                    )
-                )
+            # if not fx_fixed:
+            #     assert "fl_x" in frame, "fx not specified in frame"
+            #     fx.append(float(frame["fl_x"]))
+            # if not fy_fixed:
+            #     assert "fl_y" in frame, "fy not specified in frame"
+            #     fy.append(float(frame["fl_y"]))
+            # if not cx_fixed:
+            #     assert "cx" in frame, "cx not specified in frame"
+            #     cx.append(float(frame["cx"]))
+            # if not cy_fixed:
+            #     assert "cy" in frame, "cy not specified in frame"
+            #     cy.append(float(frame["cy"]))
+            # if not height_fixed:
+            #     assert "h" in frame, "height not specified in frame"
+            #     height.append(int(frame["h"]))
+            # if not width_fixed:
+            #     assert "w" in frame, "width not specified in frame"
+            #     width.append(int(frame["w"]))
+            # if not distort_fixed:
+            #     distort.append(
+            #         torch.tensor(frame["distortion_params"], dtype=torch.float32)
+            #         if "distortion_params" in frame
+            #         else camera_utils.get_distortion_params(
+            #             k1=float(frame["k1"]) if "k1" in frame else 0.0,
+            #             k2=float(frame["k2"]) if "k2" in frame else 0.0,
+            #             k3=float(frame["k3"]) if "k3" in frame else 0.0,
+            #             k4=float(frame["k4"]) if "k4" in frame else 0.0,
+            #             p1=float(frame["p1"]) if "p1" in frame else 0.0,
+            #             p2=float(frame["p2"]) if "p2" in frame else 0.0,
+            #         )
+            #     )
 
             image_filenames.append(fname)
             poses.append(np.array(frame["transform_matrix"]))
