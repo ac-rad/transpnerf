@@ -22,6 +22,7 @@ from typing import Literal, Optional, Tuple, Type
 import numpy as np
 import torch
 from PIL import Image
+import imageio
 
 from nerfstudio.cameras import camera_utils
 from nerfstudio.cameras.cameras import CAMERA_MODEL_TO_TYPE, Cameras, CameraType
@@ -300,14 +301,26 @@ class TranspNerf(DataParser):
         if (camera_type in [CameraType.FISHEYE, CameraType.FISHEYE624]) and (fisheye_crop_radius is not None):
             metadata["fisheye_crop_radius"] = fisheye_crop_radius
 
+        img_0 = imageio.v2.imread(image_filenames[0])
+        image_height, image_width = img_0.shape[:2]
+        camera_angle_x = float(meta["camera_angle_x"])
+        focal_length = 0.5 * image_width / np.tan(0.5 * camera_angle_x)
+
+        cx = image_width / 2.0
+        cy = image_height / 2.0
+
         cameras = Cameras(
-            fx=fx,
-            fy=fy,
+            # fx=fx,
+            # fy=fy,
+            # cx=cx,
+            # cy=cy,
+            #distortion_params=distortion_params,
+            # height=height,
+            # width=width,
+            fx=focal_length,
+            fy=focal_length,
             cx=cx,
             cy=cy,
-            #distortion_params=distortion_params,
-            height=height,
-            width=width,
             camera_to_worlds=poses[:, :3, :4],
             camera_type=camera_type,
             metadata=metadata,
