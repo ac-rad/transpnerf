@@ -36,6 +36,7 @@ from nerfstudio.data.utils.dataparsers_utils import (
 )
 from nerfstudio.utils.io import load_from_json
 from nerfstudio.utils.rich_utils import CONSOLE
+from nerfstudio.utils.colors import get_color
 
 MAX_AUTO_RESOLUTION = 1600
 
@@ -321,6 +322,8 @@ class TranspNerf(DataParser):
             fy=focal_length,
             cx=cx,
             cy=cy,
+            height = image_height,
+            width = image_width,
             camera_to_worlds=poses[:, :3, :4],
             camera_type=camera_type,
             metadata=metadata,
@@ -425,6 +428,7 @@ class TranspNerf(DataParser):
             mask_filenames=mask_filenames if len(mask_filenames) > 0 else None,
             dataparser_scale=scale_factor,
             dataparser_transform=dataparser_transform_matrix,
+            #alpha_color=get_color("white"),
             metadata={
                 "depth_filenames": depth_filenames if len(depth_filenames) > 0 else None,
                 "depth_unit_scale_factor": self.config.depth_unit_scale_factor,
