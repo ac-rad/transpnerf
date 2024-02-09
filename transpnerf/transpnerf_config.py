@@ -15,7 +15,7 @@ from transpnerf.transpnerf_model import TranspNerfModelConfig
 # )
 from nerfstudio.configs.base_config import ViewerConfig
 from nerfstudio.data.dataparsers.nerfstudio_dataparser import NerfstudioDataParserConfig
-from transpnerf.transpnerf_pipeline import TranspNerfDataParserConfig
+from transpnerf.transpnerf_dataparser import TranspNerfDataParserConfig
 from nerfstudio.engine.optimizers import AdamOptimizerConfig, RAdamOptimizerConfig
 from nerfstudio.engine.schedulers import (
     ExponentialDecaySchedulerConfig,
