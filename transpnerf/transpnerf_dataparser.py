@@ -278,21 +278,21 @@ class TranspNerf(DataParser):
         # cy = float(meta["cy"]) if cy_fixed else torch.tensor(cy, dtype=torch.float32)[idx_tensor]
         # height = int(meta["h"]) if height_fixed else torch.tensor(height, dtype=torch.int32)[idx_tensor]
         # width = int(meta["w"]) if width_fixed else torch.tensor(width, dtype=torch.int32)[idx_tensor]
-        if distort_fixed:
-            distortion_params = (
-                torch.tensor(meta["distortion_params"], dtype=torch.float32)
-                if "distortion_params" in meta
-                else camera_utils.get_distortion_params(
-                    k1=float(meta["k1"]) if "k1" in meta else 0.0,
-                    k2=float(meta["k2"]) if "k2" in meta else 0.0,
-                    k3=float(meta["k3"]) if "k3" in meta else 0.0,
-                    k4=float(meta["k4"]) if "k4" in meta else 0.0,
-                    p1=float(meta["p1"]) if "p1" in meta else 0.0,
-                    p2=float(meta["p2"]) if "p2" in meta else 0.0,
-                )
-            )
-        else:
-            distortion_params = torch.stack(distort, dim=0) #[idx_tensor]
+        # if distort_fixed:
+        #     distortion_params = (
+        #         torch.tensor(meta["distortion_params"], dtype=torch.float32)
+        #         if "distortion_params" in meta
+        #         else camera_utils.get_distortion_params(
+        #             k1=float(meta["k1"]) if "k1" in meta else 0.0,
+        #             k2=float(meta["k2"]) if "k2" in meta else 0.0,
+        #             k3=float(meta["k3"]) if "k3" in meta else 0.0,
+        #             k4=float(meta["k4"]) if "k4" in meta else 0.0,
+        #             p1=float(meta["p1"]) if "p1" in meta else 0.0,
+        #             p2=float(meta["p2"]) if "p2" in meta else 0.0,
+        #         )
+        #     )
+        # else:
+        #     distortion_params = torch.stack(distort, dim=0) #[idx_tensor]
 
         # Only add fisheye crop radius parameter if the images are actually fisheye, to allow the same config to be used
         # for both fisheye and non-fisheye datasets.
@@ -305,7 +305,7 @@ class TranspNerf(DataParser):
             fy=fy,
             cx=cx,
             cy=cy,
-            distortion_params=distortion_params,
+            #distortion_params=distortion_params,
             height=height,
             width=width,
             camera_to_worlds=poses[:, :3, :4],
