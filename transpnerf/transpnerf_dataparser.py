@@ -25,7 +25,7 @@ import torch
 
 from nerfstudio.cameras.cameras import Cameras, CameraType
 from nerfstudio.data.dataparsers.base_dataparser import DataParser, DataParserConfig, DataparserOutputs
-from nerfstudio.data.dataparsers.blender_dataparser.BlenderDataParserConfig import BlenderDataParserConfig, Blender
+from nerfstudio.data.dataparsers.blender_dataparser import BlenderDataParserConfig, Blender
 from nerfstudio.data.scene_box import SceneBox
 from nerfstudio.utils.colors import get_color
 from nerfstudio.utils.io import load_from_json
