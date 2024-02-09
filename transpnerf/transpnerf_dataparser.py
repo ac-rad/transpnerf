@@ -428,7 +428,7 @@ class TranspNerf(DataParser):
             mask_filenames=mask_filenames if len(mask_filenames) > 0 else None,
             dataparser_scale=scale_factor,
             dataparser_transform=dataparser_transform_matrix,
-            #alpha_color=get_color("white"),
+            alpha_color=get_color("white"),
             metadata={
                 "depth_filenames": depth_filenames if len(depth_filenames) > 0 else None,
                 "depth_unit_scale_factor": self.config.depth_unit_scale_factor,
