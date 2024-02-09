@@ -131,7 +131,7 @@ class TranspNerf(DataParser):
         # frames = [meta["frames"][ind] for ind in inds]
 
         for frame in meta["frames"]:
-            fname = self.data / Path(frame["file_path"].replace("./", "") + ".png")
+            fname = data_dir / Path(frame["file_path"].replace("./", "") + ".png")
         #for frame in frames:
             # filepath = Path(frame["file_path"])
             # fname = self._get_fname(filepath, data_dir)
