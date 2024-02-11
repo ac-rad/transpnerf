@@ -302,7 +302,7 @@ class TranspNerf(DataParser):
         if (camera_type in [CameraType.FISHEYE, CameraType.FISHEYE624]) and (fisheye_crop_radius is not None):
             metadata["fisheye_crop_radius"] = fisheye_crop_radius
         
-        metadata["test"] = 1
+        metadata["depth_data"] = ["file1", "file2", "file3"]
 
         img_0 = imageio.v2.imread(image_filenames[0])
         image_height, image_width = img_0.shape[:2]
@@ -330,7 +330,7 @@ class TranspNerf(DataParser):
             width = image_width,
             camera_to_worlds=poses[:, :3, :4],
             camera_type=camera_type,
-            metadata=metadata,
+            metadata=metadata
         )
 
         print("---- cameras metadata:  --- ", cameras.metadata)
