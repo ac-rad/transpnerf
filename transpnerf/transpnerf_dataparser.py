@@ -312,6 +312,8 @@ class TranspNerf(DataParser):
         cx = image_width / 2.0
         cy = image_height / 2.0
 
+        print("----metadata in cameras --- ", metadata)
+
         cameras = Cameras(
             # fx=fx,
             # fy=fy,
