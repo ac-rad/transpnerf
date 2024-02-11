@@ -333,6 +333,8 @@ class TranspNerf(DataParser):
             metadata=metadata,
         )
 
+        print("---- cameras metadata:  --- ", cameras.metadata)
+
         #assert self.downscale_factor is not None
         #cameras.rescale_output_resolution(scaling_factor=1.0 / self.downscale_factor)
 
