@@ -105,7 +105,7 @@ class TranspNerfModel(NerfactoModel):
     
     def get_metrics_dict(self, outputs, batch):
         metrics_dict = super().get_metrics_dict(outputs, batch)
-        print("batch : ", batch["depth_image"])
+        #print("batch : ", batch["depth_image"])
         return metrics_dict
     
     def get_loss_dict(self, outputs, batch, metrics_dict=None):
