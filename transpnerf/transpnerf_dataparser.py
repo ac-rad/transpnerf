@@ -98,18 +98,13 @@ class TranspNerf(DataParser):
             meta = load_from_json(self.config.data / "transforms.json")
             data_dir = self.config.data
 
+        data_id = "0029" #hotdog
+
         image_filenames = []
         mask_filenames = []
-        #depth_filenames = []
-        depth_filenames = ["hello"]
+        depth_filenames = []
         poses = []
 
-        # fx_fixed = "fl_x" in meta
-        # fy_fixed = "fl_y" in meta
-        # cx_fixed = "cx" in meta
-        # cy_fixed = "cy" in meta
-        # height_fixed = "h" in meta
-        # width_fixed = "w" in meta
         distort_fixed = False
         for distort_key in ["k1", "k2", "k3", "p1", "p2", "distortion_params"]:
             if distort_key in meta:
@@ -124,77 +119,16 @@ class TranspNerf(DataParser):
         width = []
         distort = []
 
-        # sort the frames by fname
-        # fnames = []
-        # for frame in meta["frames"]:
-        #     filepath = Path(frame["file_path"])
-        #     fname = self._get_fname(filepath, data_dir)
-        #     fnames.append(fname)
-        # inds = np.argsort(fnames)
-        # frames = [meta["frames"][ind] for ind in inds]
 
         for frame in meta["frames"]:
             fname = data_dir / Path(frame["file_path"].replace("./", "") + ".png")
-        #for frame in frames:
-            # filepath = Path(frame["file_path"])
-            # fname = self._get_fname(filepath, data_dir)
-
-            # if not fx_fixed:
-            #     assert "fl_x" in frame, "fx not specified in frame"
-            #     fx.append(float(frame["fl_x"]))
-            # if not fy_fixed:
-            #     assert "fl_y" in frame, "fy not specified in frame"
-            #     fy.append(float(frame["fl_y"]))
-            # if not cx_fixed:
-            #     assert "cx" in frame, "cx not specified in frame"
-            #     cx.append(float(frame["cx"]))
-            # if not cy_fixed:
-            #     assert "cy" in frame, "cy not specified in frame"
-            #     cy.append(float(frame["cy"]))
-            # if not height_fixed:
-            #     assert "h" in frame, "height not specified in frame"
-            #     height.append(int(frame["h"]))
-            # if not width_fixed:
-            #     assert "w" in frame, "width not specified in frame"
-            #     width.append(int(frame["w"]))
-            # if not distort_fixed:
-            #     distort.append(
-            #         torch.tensor(frame["distortion_params"], dtype=torch.float32)
-            #         if "distortion_params" in frame
-            #         else camera_utils.get_distortion_params(
-            #             k1=float(frame["k1"]) if "k1" in frame else 0.0,
-            #             k2=float(frame["k2"]) if "k2" in frame else 0.0,
-            #             k3=float(frame["k3"]) if "k3" in frame else 0.0,
-            #             k4=float(frame["k4"]) if "k4" in frame else 0.0,
-            #             p1=float(frame["p1"]) if "p1" in frame else 0.0,
-            #             p2=float(frame["p2"]) if "p2" in frame else 0.0,
-            #         )
-            #     )
-
             image_filenames.append(fname)
+
+            fname_depth = data_dir / Path(frame["file_path"].replace("./", "") + "_depth_" + data_id + ".png")
+            depth_filenames.append(fname_depth)
+            
             poses.append(np.array(frame["transform_matrix"]))
-            if "mask_path" in frame:
-                mask_filepath = Path(frame["mask_path"])
-                mask_fname = self._get_fname(
-                    mask_filepath,
-                    data_dir,
-                    downsample_folder_prefix="masks_",
-                )
-                mask_filenames.append(mask_fname)
 
-            if "depth_file_path" in frame:
-                depth_filepath = Path(frame["depth_file_path"])
-                depth_fname = self._get_fname(depth_filepath, data_dir, downsample_folder_prefix="depths_")
-                depth_filenames.append(depth_fname)
-
-        assert len(mask_filenames) == 0 or (len(mask_filenames) == len(image_filenames)), """
-        Different number of image and mask filenames.
-        You should check that mask_path is specified for every frame (or zero frames) in transforms.json.
-        """
-        #assert len(depth_filenames) == 0 or (len(depth_filenames) == len(image_filenames)), """
-        # Different number of image and depth filenames.
-        # You should check that depth_file_path is specified for every frame (or zero frames) in transforms.json.
-        # """
 
         # has_split_files_spec = any(f"{split}_filenames" in meta for split in ("train", "val", "test"))
         # if f"{split}_filenames" in meta:
