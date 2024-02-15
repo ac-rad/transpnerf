@@ -27,6 +27,9 @@ from nerfstudio.pipelines.base_pipeline import VanillaPipelineConfig
 from nerfstudio.data.datamanagers.parallel_datamanager import ParallelDataManagerConfig
 from nerfstudio.cameras.camera_optimizers import CameraOptimizerConfig
 
+from nerfstudio.data.datamanagers.base_datamanager import VanillaDataManager
+from nerfstudio.data.datasets.depth_dataset import DepthDataset
+
 transpnerf_method = MethodSpecification(
     config=TrainerConfig(
         method_name="transpnerf",  # TODO: rename to your own model
@@ -36,6 +39,7 @@ transpnerf_method = MethodSpecification(
         mixed_precision=True,
         pipeline=VanillaPipelineConfig(
             datamanager=ParallelDataManagerConfig(
+                _target=VanillaDataManager[DepthDataset],
                 dataparser=TranspNerfDataParserConfig(), #NerfstudioDataParserConfig(), 
                 train_num_rays_per_batch=4096,
                 eval_num_rays_per_batch=4096,

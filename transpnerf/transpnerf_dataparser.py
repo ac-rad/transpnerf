@@ -100,7 +100,8 @@ class TranspNerf(DataParser):
 
         image_filenames = []
         mask_filenames = []
-        depth_filenames = []
+        #depth_filenames = []
+        depth_filenames = ["hello"]
         poses = []
 
         # fx_fixed = "fl_x" in meta
