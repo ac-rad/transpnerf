@@ -50,9 +50,19 @@ class TranspNerfDataManager(ParallelDataManager):
         """Returns the next batch of data from the parallel training processes."""
         self.train_count += 1
         bundle, batch = self.data_queue.get()
+        bundle.metadata["depth"] = batch["depth_image"]
         ray_bundle = bundle.to(self.device)
+        return ray_bundle, batch
+    
+    def next_eval(self, step: int) -> Tuple[RayBundle, Dict]:
+        """Returns the next batch of data from the eval dataloader."""
+        self.eval_count += 1
+        image_batch = next(self.iter_eval_image_dataloader)
+        assert self.eval_pixel_sampler is not None
+        assert isinstance(image_batch, dict)
+        batch = self.eval_pixel_sampler.sample(image_batch)
+        ray_indices = batch["indices"]
+        ray_bundle = self.eval_ray_generator(ray_indices)
         ray_bundle.metadata["depth"] = batch["depth_image"]
         return ray_bundle, batch
 
-
-#here --- batch containes data - can append to ray bundle!!!!! AHHHHHHHH
