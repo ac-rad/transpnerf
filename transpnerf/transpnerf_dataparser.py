@@ -191,10 +191,10 @@ class TranspNerf(DataParser):
         Different number of image and mask filenames.
         You should check that mask_path is specified for every frame (or zero frames) in transforms.json.
         """
-        assert len(depth_filenames) == 0 or (len(depth_filenames) == len(image_filenames)), """
-        Different number of image and depth filenames.
-        You should check that depth_file_path is specified for every frame (or zero frames) in transforms.json.
-        """
+        #assert len(depth_filenames) == 0 or (len(depth_filenames) == len(image_filenames)), """
+        # Different number of image and depth filenames.
+        # You should check that depth_file_path is specified for every frame (or zero frames) in transforms.json.
+        # """
 
         # has_split_files_spec = any(f"{split}_filenames" in meta for split in ("train", "val", "test"))
         # if f"{split}_filenames" in meta:
