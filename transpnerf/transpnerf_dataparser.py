@@ -312,7 +312,7 @@ class TranspNerf(DataParser):
         cx = image_width / 2.0
         cy = image_height / 2.0
 
-        print("----metadata in cameras --- ", metadata)
+        #print("----metadata in cameras --- ", metadata)
 
         cameras = Cameras(
             # fx=fx,
@@ -333,7 +333,7 @@ class TranspNerf(DataParser):
             metadata=metadata
         )
 
-        print("---- cameras metadata:  --- ", cameras.metadata)
+        #print("---- cameras metadata:  --- ", cameras.metadata)
 
         #assert self.downscale_factor is not None
         #cameras.rescale_output_resolution(scaling_factor=1.0 / self.downscale_factor)
