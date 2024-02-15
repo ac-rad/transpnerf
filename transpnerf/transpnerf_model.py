@@ -16,7 +16,6 @@ from nerfstudio.model_components.losses import (
     pred_normal_loss,
     scale_gradients_by_distance_squared,
 )
-from nerfstudio.data.datamanagers.parallel_datamanager import ParallelDataManagerConfig
 
 @dataclass
 class TranspNerfModelConfig(NerfactoModelConfig):
@@ -24,7 +23,6 @@ class TranspNerfModelConfig(NerfactoModelConfig):
     """
 
     _target: Type = field(default_factory=lambda: TranspNerfModel)
-    datamanager: Optional[ParallelDataManagerConfig] = None
 
 
 class TranspNerfModel(NerfactoModel):
@@ -53,8 +51,6 @@ class TranspNerfModel(NerfactoModel):
         # refl_dir = in_dir + 2*cos_i.unsqueeze(-1)*normals
 
         #print("METADATA RAYBUNDLE: ", ray_bundle.metadata["test"])
-
-        
 
 
         ray_samples: RaySamples

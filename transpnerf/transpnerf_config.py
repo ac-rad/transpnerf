@@ -6,9 +6,9 @@ Define your custom method here that registers with Nerfstudio CLI.
 
 from __future__ import annotations
 
-# from transpnerf.transpnerf_datamanager import (
-#     TranspNerfDataManagerConfig,
-# )
+from transpnerf.transpnerf_datamanager import (
+    TranspNerfDataManagerConfig,
+)
 from transpnerf.transpnerf_model import TranspNerfModelConfig
 # from transpnerf.transpnerf_pipeline import (
 #     TranspNerfPipelineConfig,
@@ -38,19 +38,13 @@ transpnerf_method = MethodSpecification(
         max_num_iterations=30000,
         mixed_precision=True,
         pipeline=VanillaPipelineConfig(
-            datamanager=ParallelDataManagerConfig(
+            datamanager=TranspNerfDataManagerConfig( #ParallelDataManager
                 _target=VanillaDataManager[DepthDataset],
                 dataparser=TranspNerfDataParserConfig(), #NerfstudioDataParserConfig(), 
                 train_num_rays_per_batch=4096,
                 eval_num_rays_per_batch=4096,
             ),
             model=TranspNerfModelConfig(
-                datamanager=ParallelDataManagerConfig(
-                    _target=VanillaDataManager[DepthDataset],
-                    dataparser=TranspNerfDataParserConfig(), #NerfstudioDataParserConfig(), 
-                    train_num_rays_per_batch=4096,
-                    eval_num_rays_per_batch=4096,
-                ),
                 eval_num_rays_per_chunk=1 << 15,
                 camera_optimizer=CameraOptimizerConfig(mode="SO3xR3"), #SO3xR3 for nerfstudiodataparser
             ),
