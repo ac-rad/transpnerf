@@ -51,6 +51,7 @@ class TranspNerfDataManager(ParallelDataManager):
         self.train_count += 1
         bundle, batch = self.data_queue.get()
         ray_bundle = bundle.to(self.device)
+        ray_bundle.metadata["depth"] = batch["depth_image"]
         return ray_bundle, batch
 
 

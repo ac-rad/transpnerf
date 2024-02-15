@@ -50,7 +50,7 @@ class TranspNerfModel(NerfactoModel):
         # normals = 
         # refl_dir = in_dir + 2*cos_i.unsqueeze(-1)*normals
 
-        #print("METADATA RAYBUNDLE: ", ray_bundle.metadata["test"])
+        print("METADATA RAYBUNDLE: ", ray_bundle.metadata["depth"])
 
 
         ray_samples: RaySamples
