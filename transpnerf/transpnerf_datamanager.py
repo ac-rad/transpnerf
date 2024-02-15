@@ -50,8 +50,10 @@ class TranspNerfDataManager(ParallelDataManager):
         """Returns the next batch of data from the parallel training processes."""
         self.train_count += 1
         bundle, batch = self.data_queue.get()
+        print("budle metadata keys before: ", bundle.metadata.keys())
         bundle.metadata["depth"] = batch["depth_image"]
         ray_bundle = bundle.to(self.device)
+        print("budle metadata keys after: ", bundle.metadata.keys())
         return ray_bundle, batch
     
     def next_eval(self, step: int) -> Tuple[RayBundle, Dict]:
