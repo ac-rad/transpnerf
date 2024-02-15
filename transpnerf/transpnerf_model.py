@@ -9,13 +9,14 @@ from typing import Type
 from nerfstudio.models.nerfacto import NerfactoModel, NerfactoModelConfig  # for subclassing Nerfacto model
 import torch
 from nerfstudio.cameras.rays import RayBundle, RaySamples
-from typing import Dict, Tuple, Type
+from typing import Dict, Tuple, Type, Optional
 from nerfstudio.field_components.field_heads import FieldHeadNames
 from nerfstudio.model_components.losses import (
     orientation_loss,
     pred_normal_loss,
     scale_gradients_by_distance_squared,
 )
+from nerfstudio.data.datamanagers.parallel_datamanager import ParallelDataManagerConfig
 
 @dataclass
 class TranspNerfModelConfig(NerfactoModelConfig):
@@ -23,6 +24,7 @@ class TranspNerfModelConfig(NerfactoModelConfig):
     """
 
     _target: Type = field(default_factory=lambda: TranspNerfModel)
+    datamanager: Optional[ParallelDataManagerConfig] = None
 
 
 class TranspNerfModel(NerfactoModel):
