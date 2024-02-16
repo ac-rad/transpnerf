@@ -91,11 +91,10 @@ class TranspNerfDataManager(VanillaDataManager, Generic[TDataset]):
         ray_indicies_split = torch.split(ray_indices, ray_indices.shape[0])
         indicies_list = [tensor for tensor in ray_indicies_split]
 
-        num_depths = len(batch["depth"])
         depths = image_batch["depth_image"]
         all_depths = []
 
-        for i in range(num_depths):
+        for i in range(len(depths)):
             indicies = indicies_list[i]
             all_depths.append(depths[i][indicies[:1], indicies[:, 2]])
         
