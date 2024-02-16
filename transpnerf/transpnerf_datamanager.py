@@ -12,12 +12,16 @@ from nerfstudio.data.datamanagers.parallel_datamanager import (
     ParallelDataManager,
     ParallelDataManagerConfig,
 )
+from nerfstudio.data.datamanagers.base_datamanager import (
+    VanillaDataManager,
+    VanillaDataManagerConfig,
+)
 from nerfstudio.cameras.cameras import Cameras
 from typing_extensions import TypeVar
 from nerfstudio.data.datasets.base_dataset import InputDataset
 
 @dataclass
-class TranspNerfDataManagerConfig(ParallelDataManagerConfig):
+class TranspNerfDataManagerConfig(VanillaDataManagerConfig):
     """TranspNerf DataManager Config
 
     Add your custom datamanager config parameters here.
@@ -28,7 +32,7 @@ class TranspNerfDataManagerConfig(ParallelDataManagerConfig):
 
 TDataset = TypeVar("TDataset", bound=InputDataset, default=InputDataset)
 
-class TranspNerfDataManager(ParallelDataManager, Generic[TDataset]):
+class TranspNerfDataManager(VanillaDataManager, Generic[TDataset]):
     """TranspNerf DataManager
 
     Args:
