@@ -49,7 +49,7 @@ class DepthNormalDataset(InputDataset):
         print("setting up depth normal dataset!")
 
         self.depth_filenames = self.metadata["depth_filenames"]
-        self.depth_filenames = self.metadata["normal_filenames"]
+        self.normal_filenames = self.metadata["normal_filenames"]
         self.depth_unit_scale_factor = self.metadata["depth_unit_scale_factor"]
 
     def get_metadata(self, data: Dict) -> Dict:
@@ -71,11 +71,13 @@ class DepthNormalDataset(InputDataset):
         #normal_image = self._compute_normals(depth_image)
 
         # load normal
-        filepath_normal = self.normal_filenames[data["image_idx"]]
-        normal_image = cv2.imread(str(filepath_normal.absolute())).astype(np.float64)
-        normal_image = cv2.resize(normal_image, (width, height), interpolation=cv2.INTER_NEAREST)
-
-        print("normal shape---> ", normal_image.shape)
+        if self.normal_filenames:
+            filepath_normal = self.normal_filenames[data["image_idx"]]
+            normal_image = cv2.imread(str(filepath_normal.absolute())).astype(np.float64)
+            normal_image = cv2.resize(normal_image, (width, height), interpolation=cv2.INTER_NEAREST)
+            print("normal shape---> ", normal_image.shape)
+        else:
+            return {"depth_image": depth_image}
 
         return {"depth_image": depth_image, "normal_image": normal_image}
 
