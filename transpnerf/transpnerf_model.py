@@ -61,7 +61,7 @@ class TranspNerfModel(NerfactoModel):
 
         print("METADATA RAYBUNDLE keys: ", ray_bundle.metadata.keys())
         print("applying reflection to all rays ... ")
-        ray_bundle = self._reflection(ray_bundle)
+        #ray_bundle = self._reflection(ray_bundle)
 
 
         ray_samples: RaySamples
