@@ -19,6 +19,7 @@ from nerfstudio.data.datamanagers.base_datamanager import (
 from nerfstudio.cameras.cameras import Cameras
 from typing_extensions import TypeVar
 from nerfstudio.data.datasets.base_dataset import InputDataset
+from transpnerf.depth_normal_dataset import DepthNormalDataset
 
 @dataclass
 class TranspNerfDataManagerConfig(VanillaDataManagerConfig):
@@ -56,10 +57,17 @@ class TranspNerfDataManager(VanillaDataManager, Generic[TDataset]):
     
     def create_train_dataset(self) -> TDataset:
         """Sets up the data loaders for training"""
-        print("self.dataset_type -->", self.dataset_type)
+        # print("self.dataset_type -->", self.dataset_type)  # for now, hardcoding since the datset type is not changing
 
-        return self.dataset_type(
+        return DepthNormalDataset(
             dataparser_outputs=self.train_dataparser_outputs,
+            scale_factor=self.config.camera_res_scale_factor,
+        )
+    
+    def create_eval_dataset(self) -> TDataset:
+        """Sets up the data loaders for evaluation"""
+        return DepthNormalDataset(
+            dataparser_outputs=self.dataparser.get_dataparser_outputs(split=self.test_split),
             scale_factor=self.config.camera_res_scale_factor,
         )
   
