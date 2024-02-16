@@ -31,9 +31,9 @@ class TranspNerfDataManagerConfig(VanillaDataManagerConfig):
     _target: Type = field(default_factory=lambda: TranspNerfDataManager)
 
 
-#TDataset = TypeVar("TDataset", bound=InputDataset, default=InputDataset)
+TDataset = TypeVar("TDataset", bound=InputDataset, default=InputDataset)
 
-class TranspNerfDataManager(VanillaDataManager): #Generic[TDataset]
+class TranspNerfDataManager(VanillaDataManager, Generic[TDataset]):
     """TranspNerf DataManager
 
     Args:
@@ -55,8 +55,7 @@ class TranspNerfDataManager(VanillaDataManager): #Generic[TDataset]
             config=config, device=device, test_mode=test_mode, world_size=world_size, local_rank=local_rank, **kwargs
         )
 
-    # this causes CUDA out of memory
-        
+
     def create_train_dataset(self):
         """Sets up the data loaders for training"""
         # print("self.dataset_type -->", self.dataset_type)  # for now, hardcoding since the datset type is not changing
@@ -84,8 +83,10 @@ class TranspNerfDataManager(VanillaDataManager): #Generic[TDataset]
         ray_bundle = self.train_ray_generator(ray_indices)
 
         # add on normal and depth metadata
-        #ray_bundle.metadata["depth"] = self._process_depth_normal_metadata(ray_indices, image_batch["depth_image"])
-        #ray_bundle.metadata["normal"] = self._process_depth_normal_metadata(ray_indices, image_batch["normal_image"])
+        if "depth_image" in image_batch:
+            ray_bundle.metadata["depth"] = self._process_depth_normal_metadata(ray_indices, image_batch["depth_image"])
+        if "normal_image" in image_batch:
+            ray_bundle.metadata["normal"] = self._process_depth_normal_metadata(ray_indices, image_batch["normal_image"])
         
         return ray_bundle, batch
 
