@@ -77,7 +77,7 @@ class DepthNormalDataset(InputDataset):
         #     normal_image = cv2.resize(normal_image, (width, height), interpolation=cv2.INTER_NEAREST)
         #     return {"depth_image": depth_image, "normal_image": normal_image}
         
-        return {"depth_image": depth_image}
+        return {"depth_image": depth_image, "normal_image": depth_image}
 
     def _compute_normals(self, depths: torch.Tensor) -> torch.Tensor:
         # this code is from https://github.com/Ruthrash/surface_normal_filter 
