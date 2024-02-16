@@ -85,33 +85,21 @@ class TranspNerfDataManager(VanillaDataManager, Generic[TDataset]):
         ray_indices = batch["indices"]
         print(" ray_indicies shape" ,  ray_indices.shape)
         ray_bundle = self.train_ray_generator(ray_indices)
-        print("budle metadata keys before: ", ray_bundle.metadata.keys())
 
-        # get depths for pixel sampler:
-        # ray_indicies_split = torch.split(ray_indices, ray_indices.shape[0])
-        # indicies_list = [tensor for tensor in ray_indicies_split]
-        # print("len depths -->" , len(depths), "shape depths --> ", depths.shape)
-        # print("len indicies list -->", len(indicies_list), "inidices[0] shape", indicies_list[0].shape)
-
-        # depths = image_batch["depth_image"]
-        # all_depths = []
-
-        # for i in range(len(depths)):
-        #     indicies = indicies_list[i]
-        #     all_depths.append(depths[i][indicies[:, 1], indicies[:, 2]])
+        ray_bundle.metadata["depth"] = self._process_depth_normal_metadata(ray_indices, image_batch["depth_image"])
+        ray_bundle.metadata["normal"] = self._process_depth_normal_metadata(ray_indices, image_batch["normal_image"])
         
-        # final_all_depths = torch.cat(all_depths, dim=0)
-
-        c, y, x = (i.flatten() for i in torch.split(ray_indices, 1, dim=-1))
-        c, y, x = c.cpu(), y.cpu(), x.cpu()
-        final_all_depths = image_batch["depth_image"][c, x, y]
-
-        print("final_all_depths shape ", final_all_depths.shape)
-        
-
-        ray_bundle.metadata["depth"] = final_all_depths
         print("budle metadata keys after: ", ray_bundle.metadata.keys())
         print("shape directions_norm: ", ray_bundle.metadata["directions_norm"].shape)
         print("shape depth: ", ray_bundle.metadata["depth"].shape)
+        print("shape normal: ", ray_bundle.metadata["normal"].shape)
         return ray_bundle, batch
+
+    def _process_depth_normal_metadata(self, ray_indices: torch.Tensor, data: torch.Tensor) -> torch.tensor:
+        # this code is exactly what is happening in: 
+        # https://github.com/nerfstudio-project/nerfstudio/blob/45db2bcfabe6e0644a3a45a50ed80a9a685ddc34/nerfstudio/data/pixel_samplers.py#L239
+
+        c, y, x = (i.flatten() for i in torch.split(ray_indices, 1, dim=-1))
+        c, y, x = c.cpu(), y.cpu(), x.cpu()
+        return data[c, x, y]
 

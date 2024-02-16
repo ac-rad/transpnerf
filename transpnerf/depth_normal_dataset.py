@@ -31,7 +31,7 @@ from nerfstudio.data.utils.data_utils import get_depth_image_from_path
 from nerfstudio.model_components import losses
 from nerfstudio.utils.misc import torch_compile
 from nerfstudio.utils.rich_utils import CONSOLE
-
+import torch.nn.functional as F
 
 class DepthNormalDataset(InputDataset):
     """Dataset that returns images and depths. If no depths are found, then we generate them with Zoe Depth.
@@ -63,4 +63,32 @@ class DepthNormalDataset(InputDataset):
         depth_image = get_depth_image_from_path(
             filepath=filepath, height=height, width=width, scale_factor=scale_factor
         )
-        return {"depth_image": depth_image}
+
+        normal_image = self._compute_normals(depth_image)
+
+        return {"depth_image": depth_image, "normal_image": normal_image}
+
+    def _compute_normals(self, depths: torch.Tensor) -> torch.Tensor:
+        # this code is from https://github.com/Ruthrash/surface_normal_filter 
+
+        nb_channels = 1
+
+        delzdelxkernel = torch.tensor([[0.00000, 0.00000, 0.00000],
+                                        [-1.00000, 0.00000, 1.00000],
+                                        [0.00000, 0.00000, 0.00000]])
+        delzdelxkernel = delzdelxkernel.view(1, 1, 3, 3).repeat(1, nb_channels, 1, 1)
+        delzdelx = F.conv2d(depths, delzdelxkernel)
+
+        delzdelykernel = torch.tensor([[0.00000, -1.00000, 0.00000],
+                                        [0.00000, 0.00000, 0.00000],
+                                        [0.0000, 1.00000, 0.00000]])
+        delzdelykernel = delzdelykernel.view(1, 1, 3, 3).repeat(1, nb_channels, 1, 1)
+
+        delzdely = F.conv2d(depths, delzdelykernel)
+
+        delzdelz = torch.ones(delzdely.shape, dtype=torch.float64)
+
+        surface_norm = torch.stack((-delzdelx,-delzdely, delzdelz),2)
+        surface_norm = torch.div(surface_norm,  F.norm(surface_norm, dim=2)[:,:,None,:,:])
+
+        return surface_norm
