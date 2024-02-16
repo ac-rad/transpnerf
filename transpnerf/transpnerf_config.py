@@ -30,6 +30,7 @@ from nerfstudio.cameras.camera_optimizers import CameraOptimizerConfig
 
 from nerfstudio.data.datamanagers.base_datamanager import VanillaDataManager
 from nerfstudio.data.datasets.depth_dataset import DepthDataset
+from transpnerf.depth_normal_dataset import DepthNormalDataset
 
 transpnerf_method = MethodSpecification(
     config=TrainerConfig(
@@ -40,7 +41,7 @@ transpnerf_method = MethodSpecification(
         mixed_precision=True,
         pipeline=VanillaPipelineConfig(
             datamanager=TranspNerfDataManagerConfig( #ParallelDataManager
-                _target=TranspNerfDataManager[DepthDataset],
+                _target=TranspNerfDataManager[DepthNormalDataset],
                 dataparser=TranspNerfDataParserConfig(), #NerfstudioDataParserConfig(), 
                 train_num_rays_per_batch=4096,
                 eval_num_rays_per_batch=4096,
