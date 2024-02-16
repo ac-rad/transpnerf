@@ -73,7 +73,8 @@ class DepthNormalDataset(InputDataset):
         # load normal
         if self.normal_filenames:
             filepath_normal = self.normal_filenames[data["image_idx"]]
-            normals= cv2.imread(str(filepath_normal.absolute())).astype(np.float64)
+            normals= cv2.imread(str(filepath_normal.absolute()))
+            normals = normals.astype(np.float64) * scale_factor # * self._dataparser_outputs.dataparser_scale
             normals = cv2.resize(normals, (width, height), interpolation=cv2.INTER_NEAREST)
             normal_image = torch.from_numpy(normals[:, :, np.newaxis])
             return {"depth_image": depth_image, "normal_image": normal_image}
