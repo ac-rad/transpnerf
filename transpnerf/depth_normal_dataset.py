@@ -91,10 +91,11 @@ class DepthNormalDataset(InputDataset):
         delzdelz = torch.ones(delzdely.shape, dtype=torch.float64)
 
         surface_norm = torch.stack((-delzdelx,-delzdely, delzdelz),2)
+        print("surface_norm.shape --> ", surface_norm.shape)
         surface_norm = torch.div(surface_norm,  norm(surface_norm, dim=2)[:,:,None,:,:])
 
         #print("surface_norm.shape --> ", surface_norm.shape)
         surface_norm = surface_norm.permute(1, 2, 0)
-        #print("surface_norm.shape after--> ", surface_norm.shape)
+        print("surface_norm.shape after--> ", surface_norm.shape)
 
         return surface_norm
