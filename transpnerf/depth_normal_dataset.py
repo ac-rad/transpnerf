@@ -78,16 +78,16 @@ class DepthNormalDataset(InputDataset):
 
         delzdelxkernel = torch.tensor([[0.00000, 0.00000, 0.00000],
                                         [-1.00000, 0.00000, 1.00000],
-                                        [0.00000, 0.00000, 0.00000]])
+                                        [0.00000, 0.00000, 0.00000]], dtype=torch.float64)
         delzdelxkernel = delzdelxkernel.view(1, 1, 3, 3).repeat(1, nb_channels, 1, 1)
-        delzdelx = F.conv2d(depths_reshape, delzdelxkernel, dtype=torch.float64)
+        delzdelx = F.conv2d(depths_reshape, delzdelxkernel)
 
         delzdelykernel = torch.tensor([[0.00000, -1.00000, 0.00000],
                                         [0.00000, 0.00000, 0.00000],
-                                        [0.0000, 1.00000, 0.00000]])
+                                        [0.0000, 1.00000, 0.00000]], dtype=torch.float64)
         delzdelykernel = delzdelykernel.view(1, 1, 3, 3).repeat(1, nb_channels, 1, 1)
 
-        delzdely = F.conv2d(depths_reshape, delzdelykernel, dtype=torch.float64)
+        delzdely = F.conv2d(depths_reshape, delzdelykernel)
 
         delzdelz = torch.ones(delzdely.shape, dtype=torch.float64)
 
