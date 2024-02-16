@@ -82,8 +82,8 @@ class TranspNerfDataManager(VanillaDataManager, Generic[TDataset]):
         ray_bundle = self.train_ray_generator(ray_indices)
 
         # add on normal and depth metadata
-        ray_bundle.metadata["depth"] = self._process_depth_normal_metadata(ray_indices, image_batch["depth_image"])
-        ray_bundle.metadata["normal"] = self._process_depth_normal_metadata(ray_indices, image_batch["normal_image"])
+        #ray_bundle.metadata["depth"] = self._process_depth_normal_metadata(ray_indices, image_batch["depth_image"])
+        #ray_bundle.metadata["normal"] = self._process_depth_normal_metadata(ray_indices, image_batch["normal_image"])
         
         return ray_bundle, batch
 

@@ -59,8 +59,8 @@ class TranspNerfModel(NerfactoModel):
         if self.training:
             self.camera_optimizer.apply_to_raybundle(ray_bundle)
 
-        print("METADATA RAYBUNDLE keys: ", ray_bundle.metadata.keys())
-        print("applying reflection to all rays ... ")
+        #print("METADATA RAYBUNDLE keys: ", ray_bundle.metadata.keys())
+        #print("applying reflection to all rays ... ")
         #ray_bundle = self._reflection(ray_bundle)
 
 
