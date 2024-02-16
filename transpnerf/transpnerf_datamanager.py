@@ -57,25 +57,25 @@ class TranspNerfDataManager(ParallelDataManager):
         print("budle metadata keys after: ", bundle.metadata.keys())
         return ray_bundle, batch
     
-    def next_eval(self, step: int) -> Tuple[RayBundle, Dict]:
-        """Returns the next batch of data from the eval dataloader."""
-        self.eval_count += 1
-        image_batch = next(self.iter_eval_image_dataloader)
-        assert self.eval_pixel_sampler is not None
-        assert isinstance(image_batch, dict)
-        batch = self.eval_pixel_sampler.sample(image_batch)
-        ray_indices = batch["indices"]
-        ray_bundle = self.eval_ray_generator(ray_indices)
-        ray_bundle.metadata["depth"] = batch["depth_image"]
-        return ray_bundle, batch
+    # def next_eval(self, step: int) -> Tuple[RayBundle, Dict]:
+    #     """Returns the next batch of data from the eval dataloader."""
+    #     self.eval_count += 1
+    #     image_batch = next(self.iter_eval_image_dataloader)
+    #     assert self.eval_pixel_sampler is not None
+    #     assert isinstance(image_batch, dict)
+    #     batch = self.eval_pixel_sampler.sample(image_batch)
+    #     ray_indices = batch["indices"]
+    #     ray_bundle = self.eval_ray_generator(ray_indices)
+    #     ray_bundle.metadata["depth"] = batch["depth_image"]
+    #     return ray_bundle, batch
     
-    def next_eval_image(self, step: int) -> Tuple[Cameras, Dict]:
-        """Retrieve the next eval image."""
-        for camera, batch in self.eval_dataloader:
-            assert camera.shape[0] == 1
+    # def next_eval_image(self, step: int) -> Tuple[Cameras, Dict]:
+    #     """Retrieve the next eval image."""
+    #     for camera, batch in self.eval_dataloader:
+    #         assert camera.shape[0] == 1
 
-            print("adding metadata to camera here ...")
-            camera.metadata["depth"] = batch["depth_image"]
-            return camera, batch
-        raise ValueError("No more eval images")
+    #         print("adding metadata to camera here ...")
+    #         camera.metadata["depth"] = batch["depth_image"]
+    #         return camera, batch
+    #     raise ValueError("No more eval images")
 
