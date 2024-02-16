@@ -71,14 +71,13 @@ class DepthNormalDataset(InputDataset):
         #normal_image = self._compute_normals(depth_image)
 
         # load normal
-        if self.normal_filenames:
-            filepath_normal = self.normal_filenames[data["image_idx"]]
-            normal_image = cv2.imread(str(filepath_normal.absolute())).astype(np.float64)
-            normal_image = cv2.resize(normal_image, (width, height), interpolation=cv2.INTER_NEAREST)
-        else:
-            return {"depth_image": depth_image}
-
-        return {"depth_image": depth_image, "normal_image": normal_image}
+        # if self.normal_filenames:
+        #     filepath_normal = self.normal_filenames[data["image_idx"]]
+        #     normal_image = cv2.imread(str(filepath_normal.absolute())).astype(np.float64)
+        #     normal_image = cv2.resize(normal_image, (width, height), interpolation=cv2.INTER_NEAREST)
+        #     return {"depth_image": depth_image, "normal_image": normal_image}
+        
+        return {"depth_image": depth_image}
 
     def _compute_normals(self, depths: torch.Tensor) -> torch.Tensor:
         # this code is from https://github.com/Ruthrash/surface_normal_filter 
