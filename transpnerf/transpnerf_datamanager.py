@@ -53,6 +53,15 @@ class TranspNerfDataManager(VanillaDataManager, Generic[TDataset]):
         super().__init__(
             config=config, device=device, test_mode=test_mode, world_size=world_size, local_rank=local_rank, **kwargs
         )
+    
+    def create_train_dataset(self) -> TDataset:
+        """Sets up the data loaders for training"""
+        print("self.dataset_type -->", self.dataset_type)
+
+        return self.dataset_type(
+            dataparser_outputs=self.train_dataparser_outputs,
+            scale_factor=self.config.camera_res_scale_factor,
+        )
   
     def next_train(self, step: int) -> Tuple[RayBundle, Dict]:
         # """Returns the next batch of data from the parallel training processes."""
