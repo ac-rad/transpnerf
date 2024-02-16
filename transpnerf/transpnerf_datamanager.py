@@ -31,9 +31,9 @@ class TranspNerfDataManagerConfig(VanillaDataManagerConfig):
     _target: Type = field(default_factory=lambda: TranspNerfDataManager)
 
 
-TDataset = TypeVar("TDataset", bound=InputDataset, default=InputDataset)
+#TDataset = TypeVar("TDataset", bound=InputDataset, default=InputDataset)
 
-class TranspNerfDataManager(VanillaDataManager, Generic[TDataset]):
+class TranspNerfDataManager(VanillaDataManager): #Generic[TDataset]
     """TranspNerf DataManager
 
     Args:
@@ -57,21 +57,21 @@ class TranspNerfDataManager(VanillaDataManager, Generic[TDataset]):
 
     # this causes CUDA out of memory
         
-    # def create_train_dataset(self) -> TDataset:
-    #     """Sets up the data loaders for training"""
-    #     # print("self.dataset_type -->", self.dataset_type)  # for now, hardcoding since the datset type is not changing
+    def create_train_dataset(self):
+        """Sets up the data loaders for training"""
+        # print("self.dataset_type -->", self.dataset_type)  # for now, hardcoding since the datset type is not changing
 
-    #     return DepthNormalDataset(
-    #         dataparser_outputs=self.train_dataparser_outputs,
-    #         scale_factor=self.config.camera_res_scale_factor,
-    #     )
+        return DepthNormalDataset(
+            dataparser_outputs=self.train_dataparser_outputs,
+            scale_factor=self.config.camera_res_scale_factor,
+        )
     
-    # def create_eval_dataset(self) -> TDataset:
-    #     """Sets up the data loaders for evaluation"""
-    #     return DepthNormalDataset(
-    #         dataparser_outputs=self.dataparser.get_dataparser_outputs(split=self.test_split),
-    #         scale_factor=self.config.camera_res_scale_factor,
-    #     )
+    def create_eval_dataset(self):
+        """Sets up the data loaders for evaluation"""
+        return DepthNormalDataset(
+            dataparser_outputs=self.dataparser.get_dataparser_outputs(split=self.test_split),
+            scale_factor=self.config.camera_res_scale_factor,
+        )
   
     def next_train(self, step: int) -> Tuple[RayBundle, Dict]:
         """Returns the next batch of data from the train dataloader."""
