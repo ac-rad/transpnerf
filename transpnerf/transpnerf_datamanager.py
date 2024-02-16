@@ -88,20 +88,26 @@ class TranspNerfDataManager(VanillaDataManager, Generic[TDataset]):
         print("budle metadata keys before: ", ray_bundle.metadata.keys())
 
         # get depths for pixel sampler:
-        ray_indicies_split = torch.split(ray_indices, ray_indices.shape[0])
-        indicies_list = [tensor for tensor in ray_indicies_split]
-        print("len depths -->" , len(depths), "shape depths --> ", depths.shape)
-        print("len indicies list -->", len(indicies_list), "inidices[0] shape", indicies_list[0].shape)
+        # ray_indicies_split = torch.split(ray_indices, ray_indices.shape[0])
+        # indicies_list = [tensor for tensor in ray_indicies_split]
+        # print("len depths -->" , len(depths), "shape depths --> ", depths.shape)
+        # print("len indicies list -->", len(indicies_list), "inidices[0] shape", indicies_list[0].shape)
 
-        depths = image_batch["depth_image"]
-        all_depths = []
+        # depths = image_batch["depth_image"]
+        # all_depths = []
 
-        for i in range(len(depths)):
-            indicies = indicies_list[i]
-            all_depths.append(depths[i][indicies[:, 1], indicies[:, 2]])
+        # for i in range(len(depths)):
+        #     indicies = indicies_list[i]
+        #     all_depths.append(depths[i][indicies[:, 1], indicies[:, 2]])
         
-        final_all_depths = torch.cat(all_depths, dim=0)
-        print("final_all_depths.shape --> ", final_all_depths)
+        # final_all_depths = torch.cat(all_depths, dim=0)
+
+        c, y, x = (i.flatten() for i in torch.split(ray_indices, 1, dim=-1))
+        c, y, x = c.cpu(), y.cpu(), x.cpu()
+        final_all_depths = image_batch["depth_image"][c, x, y]
+
+        print("final_all_depths shape ", final_all_depths.shape)
+        
 
         ray_bundle.metadata["depth"] = final_all_depths
         print("budle metadata keys after: ", ray_bundle.metadata.keys())
