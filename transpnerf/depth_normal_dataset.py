@@ -71,8 +71,9 @@ class DepthNormalDataset(InputDataset):
     def _compute_normals(self, depths: torch.Tensor) -> torch.Tensor:
         # this code is from https://github.com/Ruthrash/surface_normal_filter 
 
+        print("depths.shape --> ", depths.shape)
         depths_reshape = depths.squeeze(-1).unsqueeze(1) #move singleton dimension to 2nd position
-
+        print("depths reshape shape: ", depths_reshape.shape)
         nb_channels = 1
 
         delzdelxkernel = torch.tensor([[0.00000, 0.00000, 0.00000],
