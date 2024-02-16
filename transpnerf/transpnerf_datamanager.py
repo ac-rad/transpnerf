@@ -80,12 +80,29 @@ class TranspNerfDataManager(VanillaDataManager, Generic[TDataset]):
         assert self.train_pixel_sampler is not None
         assert isinstance(image_batch, dict)
         batch = self.train_pixel_sampler.sample(image_batch)
+        print("pixel sampler `image` shape--> ", batch["image"].shape)
         
         ray_indices = batch["indices"]
         print(" ray_indicies shape" ,  ray_indices.shape)
         ray_bundle = self.train_ray_generator(ray_indices)
         print("budle metadata keys before: ", ray_bundle.metadata.keys())
-        ray_bundle.metadata["depth"] = image_batch["depth_image"]
+
+        # get depths for pixel sampler:
+        ray_indicies_split = torch.split(ray_indices, ray_indices.shape[0])
+        indicies_list = [tensor for tensor in ray_indicies_split]
+
+        num_depths = len(batch["depth"])
+        depths = image_batch["depth_image"]
+        all_depths = []
+
+        for i in range(num_depths):
+            indicies = indicies_list[i]
+            all_depths.append(depths[i][indicies[:1], indicies[:, 2]])
+        
+        final_all_depths = torch.cat(all_depths, dim=0)
+        print("final_all_depths.shape --> ", final_all_depths)
+
+        ray_bundle.metadata["depth"] = final_all_depths
         print("budle metadata keys after: ", ray_bundle.metadata.keys())
         print("shape directions_norm: ", ray_bundle.metadata["directions_norm"].shape)
         print("shape depth: ", ray_bundle.metadata["depth"].shape)
