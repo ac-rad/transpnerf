@@ -72,7 +72,7 @@ class DepthNormalDataset(InputDataset):
         # this code is from https://github.com/Ruthrash/surface_normal_filter 
 
         print("depths.shape --> ", depths.shape)
-        depths_reshape = depths.unsqueeze(0) #move singleton dimension to 2nd position
+        depths_reshape = depths.permute(2, 0, 1) #move singleton dimension to 2nd position
         print("depths reshape shape: ", depths_reshape.shape)
         nb_channels = 1
 
@@ -95,7 +95,7 @@ class DepthNormalDataset(InputDataset):
         surface_norm = torch.div(surface_norm,  F.norm(surface_norm, dim=2)[:,:,None,:,:])
 
         print("surface_norm.shape --> ", surface_norm.shape)
-        surface_norm = surface_norm.squeeze(0)
+        surface_norm = surface_norm.permute(1, 2, 0)
         print("surface_norm.shape after--> ", surface_norm.shape)
 
         return surface_norm
