@@ -96,7 +96,7 @@ class TranspNerfDataManager(VanillaDataManager, Generic[TDataset]):
 
         for i in range(len(depths)):
             indicies = indicies_list[i]
-            all_depths.append(depths[i][indicies[:1], indicies[:, 2]])
+            all_depths.append(depths[i][indicies[:, 1], indicies[:, 2]])
         
         final_all_depths = torch.cat(all_depths, dim=0)
         print("final_all_depths.shape --> ", final_all_depths)
