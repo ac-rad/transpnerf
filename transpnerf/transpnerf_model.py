@@ -35,22 +35,33 @@ class TranspNerfModel(NerfactoModel):
 
     # TODO: Override any potential functions/methods to implement your own method
     # or subclass from "Model" and define all mandatory fields.
+    
+    def _reflection(self, ray_bundle: RayBundle):
+        depth = ray_bundle.metadata["depth"]
+        normal = ray_bundle.metadata["normal"]
+        input_origins = ray_bundle.origins
+        input_directions = ray_bundle.directions
+        cos_theta_i = (-input_directions * normal).sum(dim=1)
+
+        # calculate reflected rays origins and directions
+        refl_origins = input_origins + depth.unsqueeze(1) * input_directions
+        refl_dir = input_directions + 2 * cos_theta_i.unsqueeze(-1) * normal
+        refl_dir = refl_dir / torch.norm(refl_dir, dim=-1).unsqueeze(-1)
+
+        # use only reflected part for now?
+        ray_bundle.origins = refl_origins
+        ray_bundle.directions = refl_dir
+
+        return ray_bundle
         
     def get_outputs(self, ray_bundle: RayBundle):
         # apply the camera optimizer pose tweaks
         if self.training:
             self.camera_optimizer.apply_to_raybundle(ray_bundle)
 
-        # bend rays
-
-        #refl_dir = in_dir + 2*cos_i*normals
-        
-        # in_dir = ray_bundle.directions
-        # cos_i = (-in_dir * normals).sum(dim=1)
-        # normals = 
-        # refl_dir = in_dir + 2*cos_i.unsqueeze(-1)*normals
-
         print("METADATA RAYBUNDLE keys: ", ray_bundle.metadata.keys())
+        print("applying reflection to all rays ... ")
+        ray_bundle = self._reflection(ray_bundle)
 
 
         ray_samples: RaySamples

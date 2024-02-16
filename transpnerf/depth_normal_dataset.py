@@ -75,7 +75,6 @@ class DepthNormalDataset(InputDataset):
             filepath_normal = self.normal_filenames[data["image_idx"]]
             normal_image = cv2.imread(str(filepath_normal.absolute())).astype(np.float64)
             normal_image = cv2.resize(normal_image, (width, height), interpolation=cv2.INTER_NEAREST)
-            print("normal shape---> ", normal_image.shape)
         else:
             return {"depth_image": depth_image}
 
@@ -106,6 +105,6 @@ class DepthNormalDataset(InputDataset):
         surface_norm = torch.stack((-delzdelx,-delzdely, delzdelz),2)
         surface_norm = torch.div(surface_norm,  norm(surface_norm, dim=2)[:,:,None,:,:])
 
-        surface_norm = surface_norm.squeeze().permute(1, 2, 0) # supposed to be (800, 800, 3) - but for some reason 798?
+        surface_norm = surface_norm.squeeze().permute(1, 2, 0) # supposed to be (800, 800, 3) - but for some reason (798, 798, 3)?
 
         return surface_norm

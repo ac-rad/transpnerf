@@ -75,24 +75,16 @@ class TranspNerfDataManager(VanillaDataManager, Generic[TDataset]):
         """Returns the next batch of data from the train dataloader."""
         self.train_count += 1
         image_batch = next(self.iter_train_image_dataloader)
-        print("image_batch image shape: ", image_batch["image"].shape, "image batch type: ", type(image_batch["image"]))
-        print("image_batch image_idx shape: ", image_batch["image_idx"].shape)
         assert self.train_pixel_sampler is not None
         assert isinstance(image_batch, dict)
         batch = self.train_pixel_sampler.sample(image_batch)
-        print("pixel sampler `image` shape--> ", batch["image"].shape)
-        
         ray_indices = batch["indices"]
-        print(" ray_indicies shape" ,  ray_indices.shape)
         ray_bundle = self.train_ray_generator(ray_indices)
 
+        # add on normal and depth metadata
         ray_bundle.metadata["depth"] = self._process_depth_normal_metadata(ray_indices, image_batch["depth_image"])
         ray_bundle.metadata["normal"] = self._process_depth_normal_metadata(ray_indices, image_batch["normal_image"])
         
-        print("budle metadata keys after: ", ray_bundle.metadata.keys())
-        print("shape directions_norm: ", ray_bundle.metadata["directions_norm"].shape)
-        print("shape depth: ", ray_bundle.metadata["depth"].shape)
-        print("shape normal: ", ray_bundle.metadata["normal"].shape)
         return ray_bundle, batch
 
     def _process_depth_normal_metadata(self, ray_indices: torch.Tensor, data: torch.Tensor) -> torch.tensor:
