@@ -72,20 +72,9 @@ class TranspNerfDataManager(VanillaDataManager, Generic[TDataset]):
         )
   
     def next_train(self, step: int) -> Tuple[RayBundle, Dict]:
-        # """Returns the next batch of data from the parallel training processes."""
-        # self.train_count += 1
-        # bundle, batch = self.data_queue.get()
-        # print("budle metadata keys before: ", bundle.metadata.keys())
-        # print("batch ---> ", batch)
-        # bundle.metadata["depth"] = batch["depth_image"]
-        # ray_bundle = bundle.to(self.device)
-        # print("budle metadata keys after: ", bundle.metadata.keys())
-        # return ray_bundle, batch
-
         """Returns the next batch of data from the train dataloader."""
         self.train_count += 1
         image_batch = next(self.iter_train_image_dataloader)
-        print("image. batch --> ", image_batch)
         assert self.train_pixel_sampler is not None
         assert isinstance(image_batch, dict)
         batch = self.train_pixel_sampler.sample(image_batch)
@@ -94,27 +83,7 @@ class TranspNerfDataManager(VanillaDataManager, Generic[TDataset]):
         print("budle metadata keys before: ", ray_bundle.metadata.keys())
         ray_bundle.metadata["depth"] = image_batch["depth_image"]
         print("budle metadata keys after: ", ray_bundle.metadata.keys())
+        print("shape directions_norm: ", ray_bundle.metadata["directions_norm"].shape)
+        print("shape depth: ", ray_bundle.metadata["depth"].shape)
         return ray_bundle, batch
-    
-    # def next_eval(self, step: int) -> Tuple[RayBundle, Dict]:
-    #     """Returns the next batch of data from the eval dataloader."""
-    #     self.eval_count += 1
-    #     image_batch = next(self.iter_eval_image_dataloader)
-    #     assert self.eval_pixel_sampler is not None
-    #     assert isinstance(image_batch, dict)
-    #     batch = self.eval_pixel_sampler.sample(image_batch)
-    #     ray_indices = batch["indices"]
-    #     ray_bundle = self.eval_ray_generator(ray_indices)
-    #     ray_bundle.metadata["depth"] = batch["depth_image"]
-    #     return ray_bundle, batch
-    
-    # def next_eval_image(self, step: int) -> Tuple[Cameras, Dict]:
-    #     """Retrieve the next eval image."""
-    #     for camera, batch in self.eval_dataloader:
-    #         assert camera.shape[0] == 1
-
-    #         print("adding metadata to camera here ...")
-    #         camera.metadata["depth"] = batch["depth_image"]
-    #         return camera, batch
-    #     raise ValueError("No more eval images")
 

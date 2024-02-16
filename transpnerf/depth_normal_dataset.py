@@ -50,12 +50,10 @@ class DepthNormalDataset(InputDataset):
         self.depth_unit_scale_factor = self.metadata["depth_unit_scale_factor"]
 
     def get_metadata(self, data: Dict) -> Dict:
-        print("IN GET METADATA")
         if self.depth_filenames is None:
             print("no depth filenames")
-            return {}#return {"depth_image": self.depths[data["image_idx"]]}
+            return {}#return {"depth_image": self.depths[data["image_idx"]]} - for zoe depth
         
-        print("getting depth dataaaa")
         filepath = self.depth_filenames[data["image_idx"]]
         height = int(self._dataparser_outputs.cameras.height[data["image_idx"]])
         width = int(self._dataparser_outputs.cameras.width[data["image_idx"]])
@@ -65,5 +63,4 @@ class DepthNormalDataset(InputDataset):
         depth_image = get_depth_image_from_path(
             filepath=filepath, height=height, width=width, scale_factor=scale_factor
         )
-        print("depth image")
         return {"depth_image": depth_image}
