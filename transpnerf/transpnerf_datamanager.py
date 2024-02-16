@@ -49,15 +49,30 @@ class TranspNerfDataManager(ParallelDataManager, Generic[TDataset]):
         super().__init__(
             config=config, device=device, test_mode=test_mode, world_size=world_size, local_rank=local_rank, **kwargs
         )
-
+  
     def next_train(self, step: int) -> Tuple[RayBundle, Dict]:
-        """Returns the next batch of data from the parallel training processes."""
+        # """Returns the next batch of data from the parallel training processes."""
+        # self.train_count += 1
+        # bundle, batch = self.data_queue.get()
+        # print("budle metadata keys before: ", bundle.metadata.keys())
+        # print("batch ---> ", batch)
+        # bundle.metadata["depth"] = batch["depth_image"]
+        # ray_bundle = bundle.to(self.device)
+        # print("budle metadata keys after: ", bundle.metadata.keys())
+        # return ray_bundle, batch
+
+        """Returns the next batch of data from the train dataloader."""
         self.train_count += 1
-        bundle, batch = self.data_queue.get()
-        print("budle metadata keys before: ", bundle.metadata.keys())
-        bundle.metadata["depth"] = batch["depth_image"]
-        ray_bundle = bundle.to(self.device)
-        print("budle metadata keys after: ", bundle.metadata.keys())
+        image_batch = next(self.iter_train_image_dataloader)
+        print("image. batch --> ", image_batch)
+        assert self.train_pixel_sampler is not None
+        assert isinstance(image_batch, dict)
+        batch = self.train_pixel_sampler.sample(image_batch)
+        ray_indices = batch["indices"]
+        ray_bundle = self.train_ray_generator(ray_indices)
+        print("budle metadata keys before: ", ray_bundle.metadata.keys())
+        ray_bundle.metadata["depth"] = image_batch["depth_image"]
+        print("budle metadata keys after: ", ray_bundle.metadata.keys())
         return ray_bundle, batch
     
     # def next_eval(self, step: int) -> Tuple[RayBundle, Dict]:
