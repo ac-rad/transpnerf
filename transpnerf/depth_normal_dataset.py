@@ -33,6 +33,7 @@ from nerfstudio.utils.misc import torch_compile
 from nerfstudio.utils.rich_utils import CONSOLE
 import torch.nn.functional as F
 from torch.functional import norm
+import cv2
 
 class DepthNormalDataset(InputDataset):
     """Dataset that returns images and depths. If no depths are found, then we generate them with Zoe Depth.
@@ -48,6 +49,7 @@ class DepthNormalDataset(InputDataset):
         print("setting up depth normal dataset!")
 
         self.depth_filenames = self.metadata["depth_filenames"]
+        self.depth_filenames = self.metadata["normal_filenames"]
         self.depth_unit_scale_factor = self.metadata["depth_unit_scale_factor"]
 
     def get_metadata(self, data: Dict) -> Dict:
@@ -65,7 +67,15 @@ class DepthNormalDataset(InputDataset):
             filepath=filepath, height=height, width=width, scale_factor=scale_factor
         )
 
-        normal_image = self._compute_normals(depth_image)
+        # compute normal - doesnt work yet
+        #normal_image = self._compute_normals(depth_image)
+
+        # load normal
+        filepath_normal = self.normal_filenames[data["image_idx"]]
+        normal_image = cv2.imread(str(filepath_normal.absolute())).astype(np.float64)
+        normal_image = cv2.resize(normal_image, (width, height), interpolation=cv2.INTER_NEAREST)
+
+        print("normal shape---> ", normal_image.shape)
 
         return {"depth_image": depth_image, "normal_image": normal_image}
 
@@ -92,11 +102,8 @@ class DepthNormalDataset(InputDataset):
         delzdelz = torch.ones(delzdely.shape, dtype=torch.float64)
 
         surface_norm = torch.stack((-delzdelx,-delzdely, delzdelz),2)
-        print("surface_norm.shape --> ", surface_norm.shape)
         surface_norm = torch.div(surface_norm,  norm(surface_norm, dim=2)[:,:,None,:,:])
 
-        print("surface_norm.shape 2 --> ", surface_norm.shape)
-        surface_norm = surface_norm.squeeze().permute(1, 2, 0) #(800, 800, 3)
-        print("surface_norm.shape after--> ", surface_norm.shape)
+        surface_norm = surface_norm.squeeze().permute(1, 2, 0) # supposed to be (800, 800, 3) - but for some reason 798?
 
         return surface_norm

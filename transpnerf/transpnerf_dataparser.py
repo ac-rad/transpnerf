@@ -103,6 +103,7 @@ class TranspNerf(DataParser):
         image_filenames = []
         mask_filenames = []
         depth_filenames = []
+        normal_filenames = []
         poses = []
         fisheye_crop_radius = meta.get("fisheye_crop_radius", None)
         cx = []
@@ -114,6 +115,9 @@ class TranspNerf(DataParser):
 
             fname_depth = data_dir / Path(frame["file_path"].replace("./", "") + "_depth_" + data_id + ".png")
             depth_filenames.append(fname_depth)
+
+            fname_normal = data_dir / Path(frame["file_path"].replace("./", "") + "_normal_" + data_id + ".png")
+            normal_filenames.append(fname_normal)
             
             poses.append(np.array(frame["transform_matrix"]))
 
@@ -190,94 +194,12 @@ class TranspNerf(DataParser):
 
         #print("---- cameras metadata:  --- ", cameras.metadata)
 
-        # # The naming is somewhat confusing, but:
-        # # - transform_matrix contains the transformation to dataparser output coordinates from saved coordinates.
-        # # - dataparser_transform_matrix contains the transformation to dataparser output coordinates from original data coordinates.
-        # # - applied_transform contains the transformation to saved coordinates from original data coordinates.
-        # applied_transform = None
-        # colmap_path = self.config.data / "colmap/sparse/0"
-        # if "applied_transform" in meta:
-        #     applied_transform = torch.tensor(meta["applied_transform"], dtype=transform_matrix.dtype)
-        # elif colmap_path.exists():
-        #     # For converting from colmap, this was the effective value of applied_transform that was being
-        #     # used before we added the applied_transform field to the output dataformat.
-        #     meta["applied_transform"] = [[0, 1, 0, 0], [1, 0, 0, 0], [0, 0, -1, 0]]
-        #     applied_transform = torch.tensor(meta["applied_transform"], dtype=transform_matrix.dtype)
-
-        # if applied_transform is not None:
-        #     dataparser_transform_matrix = transform_matrix @ torch.cat(
-        #         [applied_transform, torch.tensor([[0, 0, 0, 1]], dtype=transform_matrix.dtype)], 0
-        #     )
-        # else:
         dataparser_transform_matrix = transform_matrix
 
-        # if "applied_scale" in meta:
-        #     applied_scale = float(meta["applied_scale"])
-        #     scale_factor *= applied_scale
 
         # reinitialize metadata for dataparser_outputs
         metadata = {}
 
-        # # _generate_dataparser_outputs might be called more than once so we check if we already loaded the point cloud
-        # try:
-        #     self.prompted_user
-        # except AttributeError:
-        #     self.prompted_user = False
-
-        # # Load 3D points
-        # if self.config.load_3D_points:
-        #     if "ply_file_path" in meta:
-        #         ply_file_path = data_dir / meta["ply_file_path"]
-
-        #     elif colmap_path.exists():
-        #         from rich.prompt import Confirm
-
-        #         # check if user wants to make a point cloud from colmap points
-        #         if not self.prompted_user:
-        #             self.create_pc = Confirm.ask(
-        #                 "load_3D_points is true, but the dataset was processed with an outdated ns-process-data that didn't convert colmap points to .ply! Update the colmap dataset automatically?"
-        #             )
-
-        #         if self.create_pc:
-        #             import json
-
-        #             from nerfstudio.process_data.colmap_utils import create_ply_from_colmap
-
-        #             with open(self.config.data / "transforms.json") as f:
-        #                 transforms = json.load(f)
-
-        #             # Update dataset if missing the applied_transform field.
-        #             if "applied_transform" not in transforms:
-        #                 transforms["applied_transform"] = meta["applied_transform"]
-
-        #             ply_filename = "sparse_pc.ply"
-        #             create_ply_from_colmap(
-        #                 filename=ply_filename,
-        #                 recon_dir=colmap_path,
-        #                 output_dir=self.config.data,
-        #                 applied_transform=applied_transform,
-        #             )
-        #             ply_file_path = data_dir / ply_filename
-        #             transforms["ply_file_path"] = ply_filename
-
-        #             # This was the applied_transform value
-
-        #             with open(self.config.data / "transforms.json", "w", encoding="utf-8") as f:
-        #                 json.dump(transforms, f, indent=4)
-        #         else:
-        #             ply_file_path = None
-        #     else:
-        #         if not self.prompted_user:
-        #             CONSOLE.print(
-        #                 "[bold yellow]Warning: load_3D_points set to true but no point cloud found. splatfacto will use random point cloud initialization."
-        #             )
-        #         ply_file_path = None
-
-        #     if ply_file_path:
-        #         sparse_points = self._load_3D_points(ply_file_path, transform_matrix, scale_factor)
-        #         if sparse_points is not None:
-        #             metadata.update(sparse_points)
-        #     self.prompted_user = True
 
         dataparser_outputs = DataparserOutputs(
             image_filenames=image_filenames,
@@ -289,79 +211,10 @@ class TranspNerf(DataParser):
             alpha_color=get_color("white"),
             metadata={
                 "depth_filenames": depth_filenames if len(depth_filenames) > 0 else None,
+                "normal_filenames": normal_filenames if len(normal_filenames) > 0 else None,
                 "depth_unit_scale_factor": self.config.depth_unit_scale_factor,
                 "mask_color": self.config.mask_color,
                 **metadata,
             },
         )
         return dataparser_outputs
-
-    # def _load_3D_points(self, ply_file_path: Path, transform_matrix: torch.Tensor, scale_factor: float):
-    #     """Loads point clouds positions and colors from .ply
-
-    #     Args:
-    #         ply_file_path: Path to .ply file
-    #         transform_matrix: Matrix to transform world coordinates
-    #         scale_factor: How much to scale the camera origins by.
-
-    #     Returns:
-    #         A dictionary of points: points3D_xyz and colors: points3D_rgb
-    #     """
-    #     import open3d as o3d  # Importing open3d is slow, so we only do it if we need it.
-
-    #     pcd = o3d.io.read_point_cloud(str(ply_file_path))
-
-    #     # if no points found don't read in an initial point cloud
-    #     if len(pcd.points) == 0:
-    #         return None
-
-    #     points3D = torch.from_numpy(np.asarray(pcd.points, dtype=np.float32))
-    #     points3D = (
-    #         torch.cat(
-    #             (
-    #                 points3D,
-    #                 torch.ones_like(points3D[..., :1]),
-    #             ),
-    #             -1,
-    #         )
-    #         @ transform_matrix.T
-    #     )
-    #     points3D *= scale_factor
-    #     points3D_rgb = torch.from_numpy((np.asarray(pcd.colors) * 255).astype(np.uint8))
-
-    #     out = {
-    #         "points3D_xyz": points3D,
-    #         "points3D_rgb": points3D_rgb,
-    #     }
-    #     return out
-
-    # def _get_fname(self, filepath: Path, data_dir: Path, downsample_folder_prefix="images_") -> Path:
-    #     """Get the filename of the image file.
-    #     downsample_folder_prefix can be used to point to auxiliary image data, e.g. masks
-
-    #     filepath: the base file name of the transformations.
-    #     data_dir: the directory of the data that contains the transform file
-    #     downsample_folder_prefix: prefix of the newly generated downsampled images
-    #     """
-
-    #     if self.downscale_factor is None:
-    #         if self.config.downscale_factor is None:
-    #             test_img = Image.open(data_dir / filepath)
-    #             h, w = test_img.size
-    #             max_res = max(h, w)
-    #             df = 0
-    #             while True:
-    #                 if (max_res / 2 ** (df)) <= MAX_AUTO_RESOLUTION:
-    #                     break
-    #                 if not (data_dir / f"{downsample_folder_prefix}{2**(df+1)}" / filepath.name).exists():
-    #                     break
-    #                 df += 1
-
-    #             self.downscale_factor = 2**df
-    #             CONSOLE.log(f"Auto image downscale factor of {self.downscale_factor}")
-    #         else:
-    #             self.downscale_factor = self.config.downscale_factor
-
-    #     if self.downscale_factor > 1:
-    #         return data_dir / f"{downsample_folder_prefix}{self.downscale_factor}" / filepath.name
-    #     return data_dir / filepath
