@@ -32,6 +32,7 @@ from nerfstudio.model_components import losses
 from nerfstudio.utils.misc import torch_compile
 from nerfstudio.utils.rich_utils import CONSOLE
 import torch.nn.functional as F
+from torch.functional import norm
 
 class DepthNormalDataset(InputDataset):
     """Dataset that returns images and depths. If no depths are found, then we generate them with Zoe Depth.
@@ -71,9 +72,7 @@ class DepthNormalDataset(InputDataset):
     def _compute_normals(self, depths: torch.Tensor) -> torch.Tensor:
         # this code is from https://github.com/Ruthrash/surface_normal_filter 
 
-        print("depths.shape --> ", depths.shape)
         depths_reshape = depths.permute(2, 0, 1) #move singleton dimension to 2nd position
-        print("depths reshape shape: ", depths_reshape.shape)
         nb_channels = 1
 
         delzdelxkernel = torch.tensor([[0.00000, 0.00000, 0.00000],
@@ -92,10 +91,10 @@ class DepthNormalDataset(InputDataset):
         delzdelz = torch.ones(delzdely.shape, dtype=torch.float64)
 
         surface_norm = torch.stack((-delzdelx,-delzdely, delzdelz),2)
-        surface_norm = torch.div(surface_norm,  F.norm(surface_norm, dim=2)[:,:,None,:,:])
+        surface_norm = torch.div(surface_norm,  norm(surface_norm, dim=2)[:,:,None,:,:])
 
-        print("surface_norm.shape --> ", surface_norm.shape)
+        #print("surface_norm.shape --> ", surface_norm.shape)
         surface_norm = surface_norm.permute(1, 2, 0)
-        print("surface_norm.shape after--> ", surface_norm.shape)
+        #print("surface_norm.shape after--> ", surface_norm.shape)
 
         return surface_norm
