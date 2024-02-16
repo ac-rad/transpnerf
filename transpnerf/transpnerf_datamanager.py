@@ -75,7 +75,7 @@ class TranspNerfDataManager(VanillaDataManager, Generic[TDataset]):
         """Returns the next batch of data from the train dataloader."""
         self.train_count += 1
         image_batch = next(self.iter_train_image_dataloader)
-        print("image_batch image shape: ", image_batch["image"].shape)
+        print("image_batch image shape: ", image_batch["image"].shape, "image batch type: ", type(image_batch["image"]))
         print("image_batch image_idx shape: ", image_batch["image_idx"].shape)
         assert self.train_pixel_sampler is not None
         assert isinstance(image_batch, dict)
@@ -90,6 +90,8 @@ class TranspNerfDataManager(VanillaDataManager, Generic[TDataset]):
         # get depths for pixel sampler:
         ray_indicies_split = torch.split(ray_indices, ray_indices.shape[0])
         indicies_list = [tensor for tensor in ray_indicies_split]
+        print("len depths -->" , len(depths), "shape depths --> ", depths.shape)
+        print("len indicies list -->", len(indicies_list), "inidices[0] shape", indicies_list[0].shape)
 
         depths = image_batch["depth_image"]
         all_depths = []
