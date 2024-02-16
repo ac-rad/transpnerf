@@ -12,6 +12,7 @@ from nerfstudio.data.datamanagers.parallel_datamanager import (
     ParallelDataManager,
     ParallelDataManagerConfig,
 )
+from nerfstudio.cameras.cameras import Cameras
 
 
 @dataclass
@@ -67,4 +68,14 @@ class TranspNerfDataManager(ParallelDataManager):
         ray_bundle = self.eval_ray_generator(ray_indices)
         ray_bundle.metadata["depth"] = batch["depth_image"]
         return ray_bundle, batch
+    
+    def next_eval_image(self, step: int) -> Tuple[Cameras, Dict]:
+        """Retrieve the next eval image."""
+        for camera, batch in self.eval_dataloader:
+            assert camera.shape[0] == 1
+
+            print("adding metadata to camera here ...")
+            camera.metadata["depth"] = batch["depth_image"]
+            return camera, batch
+        raise ValueError("No more eval images")
 
