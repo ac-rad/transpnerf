@@ -71,24 +71,30 @@ class DepthNormalDataset(InputDataset):
     def _compute_normals(self, depths: torch.Tensor) -> torch.Tensor:
         # this code is from https://github.com/Ruthrash/surface_normal_filter 
 
+        depths_reshape = depths.squeeze(-1).unsqueeze(1) #move singleton dimension to 2nd position
+
         nb_channels = 1
 
         delzdelxkernel = torch.tensor([[0.00000, 0.00000, 0.00000],
                                         [-1.00000, 0.00000, 1.00000],
                                         [0.00000, 0.00000, 0.00000]])
         delzdelxkernel = delzdelxkernel.view(1, 1, 3, 3).repeat(1, nb_channels, 1, 1)
-        delzdelx = F.conv2d(depths, delzdelxkernel)
+        delzdelx = F.conv2d(depths_reshape, delzdelxkernel)
 
         delzdelykernel = torch.tensor([[0.00000, -1.00000, 0.00000],
                                         [0.00000, 0.00000, 0.00000],
                                         [0.0000, 1.00000, 0.00000]])
         delzdelykernel = delzdelykernel.view(1, 1, 3, 3).repeat(1, nb_channels, 1, 1)
 
-        delzdely = F.conv2d(depths, delzdelykernel)
+        delzdely = F.conv2d(depths_reshape, delzdelykernel)
 
         delzdelz = torch.ones(delzdely.shape, dtype=torch.float64)
 
         surface_norm = torch.stack((-delzdelx,-delzdely, delzdelz),2)
         surface_norm = torch.div(surface_norm,  F.norm(surface_norm, dim=2)[:,:,None,:,:])
+
+        print("surface_norm.shape --> ", surface_norm.shape)
+        surface_norm = surface_norm.squeeze(1).unsqueeze(-1)
+        print("surface_norm.shape after--> ", surface_norm.shape)
 
         return surface_norm
