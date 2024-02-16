@@ -3,7 +3,7 @@ TranspNerf DataManager
 """
 
 from dataclasses import dataclass, field
-from typing import Dict, Literal, Tuple, Type, Union
+from typing import Dict, Literal, Tuple, Type, Union, Generic
 
 import torch
 
@@ -13,7 +13,8 @@ from nerfstudio.data.datamanagers.parallel_datamanager import (
     ParallelDataManagerConfig,
 )
 from nerfstudio.cameras.cameras import Cameras
-
+from typing_extensions import TypeVar
+from nerfstudio.data.datasets.base_dataset import InputDataset
 
 @dataclass
 class TranspNerfDataManagerConfig(ParallelDataManagerConfig):
@@ -25,7 +26,9 @@ class TranspNerfDataManagerConfig(ParallelDataManagerConfig):
     _target: Type = field(default_factory=lambda: TranspNerfDataManager)
 
 
-class TranspNerfDataManager(ParallelDataManager):
+TDataset = TypeVar("TDataset", bound=InputDataset, default=InputDataset)
+
+class TranspNerfDataManager(ParallelDataManager, Generic[TDataset]):
     """TranspNerf DataManager
 
     Args:
