@@ -99,6 +99,7 @@ class TranspNerf(DataParser):
             data_dir = self.config.data
 
         data_id = "0029" #hotdog
+        data_id = "0090" #transpwine
 
         image_filenames = []
         mask_filenames = []
