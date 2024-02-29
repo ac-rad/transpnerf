@@ -87,24 +87,23 @@ class DepthNormalDataset(InputDataset):
 
     def get_metadata(self, data: Dict) -> Dict:
         if self.depth_filenames is None:
-            print("no depth filenames")
             return {}#return {"depth_image": self.depths[data["image_idx"]]} - for zoe depth
         
-        filepath = self.depth_filenames[data["image_idx"]]
         height = int(self._dataparser_outputs.cameras.height[data["image_idx"]])
         width = int(self._dataparser_outputs.cameras.width[data["image_idx"]])
+        scale_factor = self.depth_unit_scale_factor * self._dataparser_outputs.dataparser_scale
 
         # Scale depth images to meter units and also by scaling applied to cameras
-        scale_factor = self.depth_unit_scale_factor * self._dataparser_outputs.dataparser_scale
+        filepath_depth = self.depth_filenames[data["image_idx"]]
         depth_image = get_depth_normal_image_from_path(
-            filepath=filepath, height=height, width=width, scale_factor=scale_factor, isDepth=True
+            filepath=filepath_depth, height=height, width=width, scale_factor=scale_factor, isDepth=True
         )
         
         # load normal
         if self.normal_filenames:
             filepath_normal = self.normal_filenames[data["image_idx"]]
             normal_image = get_depth_normal_image_from_path(
-                filepath=filepath_normal, height=height, width=width, scale_factor=self._dataparser_outputs.dataparser_scale, isDepth=False
+                filepath=filepath_normal, height=height, width=width, scale_factor=scale_factor, isDepth=False
             )
         # compute from depth
         else:

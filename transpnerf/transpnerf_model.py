@@ -49,8 +49,8 @@ class TranspNerfModel(NerfactoModel):
         refl_dir = refl_dir / torch.norm(refl_dir, dim=-1).unsqueeze(-1)
 
         # use only reflected part for now
-        ray_bundle.origins = refl_origins
-        ray_bundle.directions = refl_dir
+        ray_bundle.origins = refl_origins.clone()
+        ray_bundle.directions = refl_dir.clone()
 
         return ray_bundle
         
