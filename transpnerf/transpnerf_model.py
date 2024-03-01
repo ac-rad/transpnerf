@@ -41,16 +41,16 @@ class TranspNerfModel(NerfactoModel):
         normal = ray_bundle.metadata["normal"]
         input_origins = ray_bundle.origins
         input_directions = ray_bundle.directions
-        cos_theta_i = (-input_directions * normal).sum(dim=1)
+        cos_theta_i = (-input_directions * normal).sum(dim=1) 
 
         # calculate reflected rays origins and directions
-        refl_origins = input_origins + depth.unsqueeze(1) * input_directions
+        refl_origins = input_origins + depth.expand(-1, 3) * input_directions
         refl_dir = input_directions + 2 * cos_theta_i.unsqueeze(-1) * normal
         refl_dir = refl_dir / torch.norm(refl_dir, dim=-1).unsqueeze(-1)
 
-        # use only reflected part for now?
-        ray_bundle.origins = refl_origins
-        ray_bundle.directions = refl_dir
+        # use only reflected part for now
+        ray_bundle.origins = refl_origins.clone()
+        ray_bundle.directions = refl_dir.clone()
 
         return ray_bundle
         
@@ -59,10 +59,8 @@ class TranspNerfModel(NerfactoModel):
         if self.training:
             self.camera_optimizer.apply_to_raybundle(ray_bundle)
 
-        print("METADATA RAYBUNDLE keys: ", ray_bundle.metadata.keys())
-        #print("applying reflection to all rays ... ")
-        #ray_bundle = self._reflection(ray_bundle)
-
+        if "depth" in ray_bundle.metadata.keys() and "normal" in ray_bundle.metadata.keys():
+            ray_bundle = self._reflection(ray_bundle)
 
         ray_samples: RaySamples
         ray_samples, weights_list, ray_samples_list = self.proposal_sampler(ray_bundle, density_fns=self.density_fns)

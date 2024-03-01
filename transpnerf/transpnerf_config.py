@@ -17,6 +17,7 @@ from transpnerf.transpnerf_model import TranspNerfModelConfig
 from nerfstudio.configs.base_config import ViewerConfig
 from nerfstudio.data.dataparsers.nerfstudio_dataparser import NerfstudioDataParserConfig
 from transpnerf.transpnerf_dataparser import TranspNerfDataParserConfig
+from transpnerf.transpnerf_dataparser_blender import TranspNerfDataParserBlenderConfig
 from nerfstudio.data.dataparsers.blender_dataparser import BlenderDataParserConfig
 from nerfstudio.engine.optimizers import AdamOptimizerConfig, RAdamOptimizerConfig
 from nerfstudio.engine.schedulers import (
@@ -42,7 +43,7 @@ transpnerf_method = MethodSpecification(
         pipeline=VanillaPipelineConfig(
             datamanager=TranspNerfDataManagerConfig( #ParallelDataManager
                 _target=TranspNerfDataManager[DepthNormalDataset],
-                dataparser=TranspNerfDataParserConfig(), #NerfstudioDataParserConfig(), 
+                dataparser= TranspNerfDataParserBlenderConfig(), #TranspNerfDataParserConfig(), #NerfstudioDataParserConfig(), 
                 train_num_rays_per_batch=4096,
                 eval_num_rays_per_batch=4096,
             ),

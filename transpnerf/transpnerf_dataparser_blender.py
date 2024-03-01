@@ -28,10 +28,10 @@ from nerfstudio.data.dataparsers.base_dataparser import DataParser, DataParserCo
 from nerfstudio.data.scene_box import SceneBox
 from nerfstudio.utils.colors import get_color
 from nerfstudio.utils.io import load_from_json
-
+import random
 
 @dataclass
-class TranspNerfDataParserConfig(DataParserConfig):
+class TranspNerfDataParserBlenderConfig(DataParserConfig):
     """Blender dataset parser config"""
 
     _target: Type = field(default_factory=lambda: TranspNerfData)
@@ -63,21 +63,27 @@ class TranspNerfData(DataParser):
             self.alpha_color_tensor = None
 
     def _generate_dataparser_outputs(self, split="test"): # test set which includes normals and depths
-        print("----- curr split: ", split)
-        
-        meta = load_from_json(self.data / f"transforms_{split}.json")
+
+        print("Generating blender dataset.")
+
+        meta = load_from_json(self.data)
+        data_dir = self.data.parent
         image_filenames = []
         normal_filenames = []
         depth_filenames = []
 
+        #data_id = "0029" #hotdog - 200 captures
+        #data_id = "0090" #transpwine - 40 captures
+        data_id = "0000" #coffee - 40 captures
+
         poses = []
-        for frame in meta["frames"]:
-            fname = self.data / Path(frame["file_path"].replace("./", "") + ".png")
+        for frame in random.sample(meta["frames"], 40): #meta["frames"]:
+            fname = data_dir / Path(frame["file_path"].replace("./", "") + ".png")
             image_filenames.append(fname)
 
             # added normal and depths
-            fname_normal = self.data / Path(frame["file_path"].replace("./", "") + "_normal_0001.png")
-            fname_depth = self.data / Path(frame["file_path"].replace("./", "") + "_normal_0001.png")
+            fname_depth = data_dir / Path(frame["file_path"].replace("./", "") + "_depth_" + data_id + ".png")
+            fname_normal = data_dir / Path(frame["file_path"].replace("./", "") + "_normal_" + data_id + ".png")
             normal_filenames.append(fname_normal)
             depth_filenames.append(fname_depth)
             
@@ -112,6 +118,12 @@ class TranspNerfData(DataParser):
             alpha_color=self.alpha_color_tensor,
             scene_box=scene_box,
             dataparser_scale=self.scale_factor,
+            metadata={
+                "depth_filenames": depth_filenames if len(depth_filenames) > 0 else None,
+                "normal_filenames": normal_filenames if len(normal_filenames) > 0 else None,
+                "depth_unit_scale_factor": self.scale_factor,
+                #"mask_color": self.config.mask_color,
+            },
         )
 
         return dataparser_outputs

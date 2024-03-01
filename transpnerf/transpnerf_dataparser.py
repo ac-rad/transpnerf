@@ -98,7 +98,9 @@ class TranspNerf(DataParser):
             meta = load_from_json(self.config.data / "transforms.json")
             data_dir = self.config.data
 
-        data_id = "0029" #hotdog
+        #data_id = "0029" #hotdog - 200 captures
+        data_id = "0090" #transpwine - 40 captures
+        #data_id = "0000" #coffee - 40 captures
 
         image_filenames = []
         mask_filenames = []

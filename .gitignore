@@ -1,0 +1,3 @@
+transpnerf.egg-info/*
+__pycache__/
+outputs/

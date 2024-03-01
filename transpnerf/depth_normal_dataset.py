@@ -27,13 +27,46 @@ from rich.progress import track
 
 from nerfstudio.data.dataparsers.base_dataparser import DataparserOutputs
 from nerfstudio.data.datasets.base_dataset import InputDataset
-from nerfstudio.data.utils.data_utils import get_depth_image_from_path
+# from nerfstudio.data.utils.data_utils import get_depth_image_from_path
 from nerfstudio.model_components import losses
 from nerfstudio.utils.misc import torch_compile
 from nerfstudio.utils.rich_utils import CONSOLE
 import torch.nn.functional as F
 from torch.functional import norm
 import cv2
+
+def get_depth_normal_image_from_path(
+    filepath: Path,
+    height: int,
+    width: int,
+    scale_factor: float,
+    interpolation: int = cv2.INTER_NEAREST,
+    isDepth: bool = True,
+) -> torch.Tensor:
+    """Loads, rescales and resizes depth images.
+    Filepath points to a 16-bit or 32-bit depth image, or a numpy array `*.npy`.
+
+    Args:
+        filepath: Path to depth image.
+        height: Target depth image height.
+        width: Target depth image width.
+        scale_factor: Factor by which to scale depth image.
+        interpolation: Depth value interpolation for resizing.
+
+    Returns:
+        Depth image torch tensor with shape [height, width, 1].
+    """
+    if isDepth:
+        image = cv2.imread(str(filepath.absolute()), cv2.IMREAD_ANYDEPTH)
+        image = image.astype(np.float32) * scale_factor
+        image = cv2.resize(image, (width, height), interpolation=interpolation)
+        return torch.from_numpy(image[:, :, np.newaxis])
+    else:
+        image = cv2.imread(str(filepath.absolute()), cv2.IMREAD_ANYDEPTH | cv2.IMREAD_COLOR) 
+        image = image.astype(np.float32) * scale_factor
+        image = cv2.resize(image, (width, height), interpolation=interpolation)
+        return torch.squeeze(torch.from_numpy(image[:, :, np.newaxis]))
+
 
 class DepthNormalDataset(InputDataset):
     """Dataset that returns images and depths. If no depths are found, then we generate them with Zoe Depth.
@@ -54,32 +87,29 @@ class DepthNormalDataset(InputDataset):
 
     def get_metadata(self, data: Dict) -> Dict:
         if self.depth_filenames is None:
-            print("no depth filenames")
             return {}#return {"depth_image": self.depths[data["image_idx"]]} - for zoe depth
         
-        filepath = self.depth_filenames[data["image_idx"]]
         height = int(self._dataparser_outputs.cameras.height[data["image_idx"]])
         width = int(self._dataparser_outputs.cameras.width[data["image_idx"]])
+        scale_factor = self.depth_unit_scale_factor * self._dataparser_outputs.dataparser_scale
 
         # Scale depth images to meter units and also by scaling applied to cameras
-        scale_factor = self.depth_unit_scale_factor * self._dataparser_outputs.dataparser_scale
-        depth_image = get_depth_image_from_path(
-            filepath=filepath, height=height, width=width, scale_factor=scale_factor
+        filepath_depth = self.depth_filenames[data["image_idx"]]
+        depth_image = get_depth_normal_image_from_path(
+            filepath=filepath_depth, height=height, width=width, scale_factor=scale_factor, isDepth=True
         )
-
-        # compute normal - doesnt work yet
-        #normal_image = self._compute_normals(depth_image)
-
-        # load normal
-        # if self.normal_filenames:
-        #     filepath_normal = self.normal_filenames[data["image_idx"]]
-        #     normals= cv2.imread(str(filepath_normal.absolute()))
-        #     normals = normals.astype(np.float64) * scale_factor # * self._dataparser_outputs.dataparser_scale
-        #     normals = cv2.resize(normals, (width, height), interpolation=cv2.INTER_NEAREST)
-        #     normal_image = torch.from_numpy(normals[:, :, np.newaxis])
-        #     return {"depth_image": depth_image, "normal_image": normal_image}
         
-        return {"depth_image": depth_image, "normal_image": depth_image}
+        # load normal
+        if self.normal_filenames:
+            filepath_normal = self.normal_filenames[data["image_idx"]]
+            normal_image = get_depth_normal_image_from_path(
+                filepath=filepath_normal, height=height, width=width, scale_factor=scale_factor, isDepth=False
+            )
+        # compute from depth
+        else:
+            normal_image = self._compute_normals(depth_image)
+        
+        return {"depth_image": depth_image, "normal_image": normal_image} 
 
     def _compute_normals(self, depths: torch.Tensor) -> torch.Tensor:
         # this code is from https://github.com/Ruthrash/surface_normal_filter 
@@ -90,18 +120,18 @@ class DepthNormalDataset(InputDataset):
 
         delzdelxkernel = torch.tensor([[0.00000, 0.00000, 0.00000],
                                         [-1.00000, 0.00000, 1.00000],
-                                        [0.00000, 0.00000, 0.00000]], dtype=torch.float64)
+                                        [0.00000, 0.00000, 0.00000]]) #, dtype=torch.float64
         delzdelxkernel = delzdelxkernel.view(1, 1, 3, 3).repeat(1, nb_channels, 1, 1)
-        delzdelx = F.conv2d(depths_reshape, delzdelxkernel)
+        delzdelx = F.conv2d(depths_reshape, delzdelxkernel, padding=1)
 
         delzdelykernel = torch.tensor([[0.00000, -1.00000, 0.00000],
                                         [0.00000, 0.00000, 0.00000],
-                                        [0.0000, 1.00000, 0.00000]], dtype=torch.float64)
+                                        [0.0000, 1.00000, 0.00000]]) #, dtype=torch.float64
         delzdelykernel = delzdelykernel.view(1, 1, 3, 3).repeat(1, nb_channels, 1, 1)
 
-        delzdely = F.conv2d(depths_reshape, delzdelykernel)
+        delzdely = F.conv2d(depths_reshape, delzdelykernel, padding=1)
 
-        delzdelz = torch.ones(delzdely.shape, dtype=torch.float64)
+        delzdelz = torch.ones(delzdely.shape) #, dtype=torch.float64
 
         surface_norm = torch.stack((-delzdelx,-delzdely, delzdelz),2)
         surface_norm = torch.div(surface_norm,  norm(surface_norm, dim=2)[:,:,None,:,:])
