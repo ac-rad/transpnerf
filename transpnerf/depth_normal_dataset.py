@@ -103,7 +103,7 @@ class DepthNormalDataset(InputDataset):
         if self.normal_filenames:
             filepath_normal = self.normal_filenames[data["image_idx"]]
             normal_image = get_depth_normal_image_from_path(
-                filepath=filepath_normal, height=height, width=width, scale_factor=scale_factor, isDepth=False
+                filepath=filepath_normal, height=height, width=width, scale_factor=self._dataparser_outputs.dataparser_scale, isDepth=False
             )
         # compute from depth
         else:

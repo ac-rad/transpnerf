@@ -71,10 +71,27 @@ class TranspNerfData(DataParser):
         image_filenames = []
         normal_filenames = []
         depth_filenames = []
+        depth_scale = 1
+        scene_box = SceneBox(aabb=torch.tensor([[-1.5, -1.5, -1.5], [1.5, 1.5, 1.5]], dtype=torch.float32))
 
-        #data_id = "0029" #hotdog - 200 captures
-        #data_id = "0090" #transpwine - 40 captures
-        data_id = "0000" #coffee - 40 captures
+        # render = "hotdog"
+        # render = "ficus"
+        render = "wine"
+        #render = "coffee"
+
+        if render == "hotdog":
+            data_id = "0029" #hotdog - 200 captures
+        elif render == "ficus":
+            data_id = "0136" # ficus - 200 captures
+        elif render == "wine":
+            data_id = "0090" #transpwine - 40 captures
+            scene_box = SceneBox(aabb=torch.tensor([[-1.5, -1.5, -1], [1.5, 1.5, 2]], dtype=torch.float32)) #shift box z axis
+        elif render == "coffee":
+            data_id = "0000"  #coffee - 40 captures
+            depth_scale = 0.1
+        else:
+            print("error")
+        
 
         poses = []
         for frame in random.sample(meta["frames"], 40): #meta["frames"]:
@@ -101,7 +118,7 @@ class TranspNerfData(DataParser):
 
         # in x,y,z order
         camera_to_world[..., 3] *= self.scale_factor
-        scene_box = SceneBox(aabb=torch.tensor([[-1.5, -1.5, -1.5], [1.5, 1.5, 1.5]], dtype=torch.float32))
+        
 
         cameras = Cameras(
             camera_to_worlds=camera_to_world,
@@ -121,7 +138,7 @@ class TranspNerfData(DataParser):
             metadata={
                 "depth_filenames": depth_filenames if len(depth_filenames) > 0 else None,
                 "normal_filenames": normal_filenames if len(normal_filenames) > 0 else None,
-                "depth_unit_scale_factor": self.scale_factor,
+                "depth_unit_scale_factor": depth_scale,
                 #"mask_color": self.config.mask_color,
             },
         )
