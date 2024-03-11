@@ -16,6 +16,10 @@ from nerfstudio.model_components.losses import (
     pred_normal_loss,
     scale_gradients_by_distance_squared,
 )
+from nerfstudio.fields.vanilla_nerf_field import NeRFField
+from nerfstudio.model_components.ray_samplers import PDFSampler
+from nerfstudio.fields.nerfacto_field import NerfactoField
+import math
 
 @dataclass
 class TranspNerfModelConfig(NerfactoModelConfig):
@@ -23,6 +27,8 @@ class TranspNerfModelConfig(NerfactoModelConfig):
     """
 
     _target: Type = field(default_factory=lambda: TranspNerfModel)
+    num_importance_samples: int = 128
+    """Number of samples in fine field evaluation"""
 
 
 class TranspNerfModel(NerfactoModel):
@@ -32,15 +38,26 @@ class TranspNerfModel(NerfactoModel):
 
     def populate_modules(self):
         super().populate_modules()
+        self.sampler_pdf = PDFSampler(num_samples=self.config.num_importance_samples, include_original=False)
 
     # TODO: Override any potential functions/methods to implement your own method
     # or subclass from "Model" and define all mandatory fields.
     
     def _reflection(self, ray_bundle: RayBundle):
+        #print("refl")
         depth = ray_bundle.metadata["depth"]
         normal = ray_bundle.metadata["normal"]
         input_origins = ray_bundle.origins
         input_directions = ray_bundle.directions
+       
+        # Generate a mask to exclude the background
+        target_tensor = torch.tensor([0., 0., 0.]).cuda()  # target black normal (background)
+        index_mask = torch.all(normal != target_tensor, dim=1) # indicies that are not background
+
+        #index_mask = torch.all(depth != 0, dim=1)
+
+        #print("index mask True count --> ", torch.sum(index_mask).item())
+        # calculate incident angle
         cos_theta_i = (-input_directions * normal).sum(dim=1) 
 
         # calculate reflected rays origins and directions
@@ -48,25 +65,98 @@ class TranspNerfModel(NerfactoModel):
         refl_dir = input_directions + 2 * cos_theta_i.unsqueeze(-1) * normal
         refl_dir = refl_dir / torch.norm(refl_dir, dim=-1).unsqueeze(-1)
 
+        # new line
+        #refl_origins = refl_origins - depth.expand(-1, 3) * refl_dir
+
         # use only reflected part for now
-        ray_bundle.origins = refl_origins.clone()
-        ray_bundle.directions = refl_dir.clone()
+        ray_bundle.origins[index_mask] = refl_origins.clone()[index_mask]
+        ray_bundle.directions[index_mask] = refl_dir.clone()[index_mask].to(ray_bundle.directions.dtype)
 
         return ray_bundle
+
+    # def _refraction_w_reflect(self, ray_bundle: RayBundle, only_reflect: boolean):
+    #     # only with the first intersection of the refractive surface
+
+    #     ior = 1/1.5 #for now
+    #     depth = ray_bundle.metadata["depth"]
+    #     normal = ray_bundle.metadata["normal"]
+    #     input_origins = ray_bundle.origins
+    #     input_directions = ray_bundle.directions
+
+    #     # Generate a mask to exclude the background
+    #     target_tensor = torch.tensor([0., 0., 0.]).cuda()  # target black normal (background)
+    #     index_mask = torch.all(normal != target_tensor, dim=1) # indicies that are not background
+        
+    #     # cos theta i 
+    #     cos_theta_i = (-input_directions * normal).sum(dim=1) 
+
+    #     # calculate reflected rays origins and directions
+    #     refl_origins = input_origins + depth.expand(-1, 3) * input_directions
+    #     refl_dir = input_directions + 2 * cos_theta_i.unsqueeze(-1) * normal
+    #     refl_dir = refl_dir / torch.norm(refl_dir, dim=-1).unsqueeze(-1)
+
+    #     if only_reflect:
+    #         ray_bundle.origins[index_mask] = refl_origins.clone()[index_mask]
+    #         ray_bundle.directions[index_mask] = refl_dir.clone()[index_mask].to(ray_bundle.directions.dtype)
+    #         return ray_bundle
+
+        
+    #     # first refraction
+    #     cos_theta_o = torch.sqrt(1- ior**2 * (1- cos_theta_i**2))
+    #     refract_dir_1 = -ior*depth + (ior*(-cos_theta_i) - cos_theta_o).unsqueeze(-1)*normal
+    #     refract_dir_1 = refract_dir_1 / torch.norm(refract_dir_1, dim=-1).unsqueeze(-1)
+    #     refract_origins_1 = refl_origins
+
+    #     # second refraction
+    #     refract_origin_2 = refract_origins_1 + depth.expand(-1,3) * refract_dir_1
+    #     cos_theta_i_2 = (-refract_dir_1 * normal).sum(dim=1)
+    #     cos_theta_o_2 = torch.sqrt(1- ior**2 * (1- cos_theta_i_2**2)) #below zero might remove
+    #     refract_dir_2 = 
+
+
+
         
     def get_outputs(self, ray_bundle: RayBundle):
         # apply the camera optimizer pose tweaks
         if self.training:
             self.camera_optimizer.apply_to_raybundle(ray_bundle)
-
-        if "depth" in ray_bundle.metadata.keys() and "normal" in ray_bundle.metadata.keys():
-            ray_bundle = self._reflection(ray_bundle)
-
+        
+        apply_refl = True
+        apply_before = True
+        
+        if apply_before and apply_refl:
+            # apply reflection
+            if "depth" in ray_bundle.metadata.keys() and "normal" in ray_bundle.metadata.keys():
+                ray_bundle = self._reflection(ray_bundle)
+        
+        # proposal sampler
         ray_samples: RaySamples
         ray_samples, weights_list, ray_samples_list = self.proposal_sampler(ray_bundle, density_fns=self.density_fns)
         field_outputs = self.field.forward(ray_samples, compute_normals=self.config.predict_normals)
         if self.config.use_gradient_scaling:
             field_outputs = scale_gradients_by_distance_squared(field_outputs, ray_samples)
+        
+        
+        if not(apply_before) and apply_refl:
+            print("no")
+            weights = ray_samples.get_weights(field_outputs[FieldHeadNames.DENSITY])
+            ray_samples: RaySamples
+
+            if "depth" in ray_bundle.metadata.keys() and "normal" in ray_bundle.metadata.keys():
+                ray_bundle = self._reflection(ray_bundle)
+
+            ray_samples =  self.sampler_pdf(ray_bundle, ray_samples, weights)
+            field_outputs = self.field.forward(ray_samples, compute_normals=self.config.predict_normals)
+            if self.config.use_gradient_scaling:
+                field_outputs = scale_gradients_by_distance_squared(field_outputs, ray_samples)
+        
+        # regular pdf way 
+        # weights = ray_samples.get_weights(field_outputs[FieldHeadNames.DENSITY])
+        # # pdf sampling
+        # ray_samples = self.sampler_pdf(ray_bundle, ray_samples, weights)
+        # field_outputs = self.field.forward(ray_samples, compute_normals=self.config.predict_normals)
+        # if self.config.use_gradient_scaling:
+        #     field_outputs = scale_gradients_by_distance_squared(field_outputs, ray_samples)
 
         weights = ray_samples.get_weights(field_outputs[FieldHeadNames.DENSITY])
         weights_list.append(weights)
@@ -112,7 +202,6 @@ class TranspNerfModel(NerfactoModel):
     
     def get_metrics_dict(self, outputs, batch):
         metrics_dict = super().get_metrics_dict(outputs, batch)
-        #print("batch : ", batch["depth_image"])
         return metrics_dict
     
     def get_loss_dict(self, outputs, batch, metrics_dict=None):

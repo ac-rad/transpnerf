@@ -74,10 +74,11 @@ class TranspNerfData(DataParser):
         depth_scale = 1
         scene_box = SceneBox(aabb=torch.tensor([[-1.5, -1.5, -1.5], [1.5, 1.5, 1.5]], dtype=torch.float32))
 
-        # render = "hotdog"
+        #render = "hotdog"
         # render = "ficus"
-        render = "wine"
-        #render = "coffee"
+        #render = "wine"
+        render = "coffee"
+        #render = "spoon"
 
         if render == "hotdog":
             data_id = "0029" #hotdog - 200 captures
@@ -88,12 +89,15 @@ class TranspNerfData(DataParser):
             scene_box = SceneBox(aabb=torch.tensor([[-1.5, -1.5, -1], [1.5, 1.5, 2]], dtype=torch.float32)) #shift box z axis
         elif render == "coffee":
             data_id = "0000"  #coffee - 40 captures
-            depth_scale = 0.1
+        elif render == "spoon":
+            data_id = "0000"
+            scene_box = SceneBox(aabb=torch.tensor([[-1.5, -1.5, -1], [1.5, 1.5, 2]], dtype=torch.float32)) #shift box z axis
         else:
             print("error")
         
 
         poses = []
+        random.seed(27)
         for frame in random.sample(meta["frames"], 40): #meta["frames"]:
             fname = data_dir / Path(frame["file_path"].replace("./", "") + ".png")
             image_filenames.append(fname)

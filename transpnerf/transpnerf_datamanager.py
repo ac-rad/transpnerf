@@ -78,21 +78,51 @@ class TranspNerfDataManager(VanillaDataManager, Generic[TDataset]):
         image_batch = next(self.iter_train_image_dataloader)
         assert self.train_pixel_sampler is not None
         assert isinstance(image_batch, dict)
+
+        # apply a mask to sample rays intersecting object:
+        # if "normal_image" in image_batch:
+        #     #norm = torch.norm(image_batch["normal_image"], dim=1)
+        #     #mask = (norm == 0).unsqueeze(1).expand_as(image_batch["normal_image"])
+        #     #mask = ((image_batch["normal_image"] == 0).any(dim=None, keepdim=True)).expand_as(image_batch["normal_image"])
+            
+        #     # mask = torch.zeros_like(image_batch["normal_image"], dtype=torch.bool)
+        #     # for dim in range(image_batch["normal_image"].dim()):
+        #     #     mask = mask | ((image_batch["normal_image"] != 0).any(dim=dim, keepdim=True)).expand_as(image_batch["normal_image"])
+
+        #     #mask = mask.unsqueeze(-1).expand_as(image_batch["normal_image"])
+        #     print("image_batch[normal_image] size --> ", image_batch["normal_image"].size())
+        #     #mask = (image_batch["normal_image"][..., -1] == 0).unsqueeze(-1).all(dim=-1, keepdim=True)
+        #     mask = ((image_batch["normal_image"][..., 0] != 0) &
+        #             (image_batch["normal_image"][..., 1] != 0) &
+        #             (image_batch["normal_image"][..., 2] != 0)
+        #              ).unsqueeze(-1).all(dim=-1, keepdim=True)
+        #     print("curr mask size --> ", mask.size())
+        #     mask = mask.expand_as(image_batch["normal_image"])
+        #     image_batch["mask"] = mask
+
+        #     #print("image_batch[image] size --> ", image_batch["image"].size())
+        #     print("image_batch[mask] size --> ", mask.size())
+        
+        #     print("image batch mask count --> ", torch.sum(image_batch["mask"]).item())
+
         batch = self.train_pixel_sampler.sample(image_batch)
         ray_indices = batch["indices"]
+        #print("ray_indices size --> ", ray_indices.size())
         ray_bundle = self.train_ray_generator(ray_indices)
 
         # add on normal and depth metadata
         if "depth_image" in image_batch:
-            ray_bundle.metadata["depth"] = self._process_depth_normal_metadata(ray_indices, image_batch["depth_image"])
+            ray_bundle.metadata["depth"] =  self._process_depth_normal_metadata(ray_indices, image_batch["depth_image"]) #batch["depth_image"]
         if "normal_image" in image_batch:
-            ray_bundle.metadata["normal"] = self._process_depth_normal_metadata(ray_indices, image_batch["normal_image"])
+            ray_bundle.metadata["normal"] = self._process_depth_normal_metadata(ray_indices, image_batch["normal_image"]) #batch["normal_image"]
         
         return ray_bundle, batch
 
     def _process_depth_normal_metadata(self, ray_indices: torch.Tensor, data: torch.Tensor) -> torch.tensor:
         # this code is exactly what is happening in: 
         # https://github.com/nerfstudio-project/nerfstudio/blob/45db2bcfabe6e0644a3a45a50ed80a9a685ddc34/nerfstudio/data/pixel_samplers.py#L239
+
+        # c - camera indices, y - row indicies, x - column indicies
 
         c, y, x = (i.flatten() for i in torch.split(ray_indices, 1, dim=-1))
         c, y, x = c.cpu(), y.cpu(), x.cpu()

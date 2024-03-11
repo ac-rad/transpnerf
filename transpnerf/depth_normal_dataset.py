@@ -81,8 +81,13 @@ class DepthNormalDataset(InputDataset):
 
         print("setting up depth normal dataset!")
 
-        self.depth_filenames = self.metadata["depth_filenames"]
-        self.normal_filenames = self.metadata["normal_filenames"]
+        self.depth_filenames = []
+        self.normal_filenames = []
+
+        if "depth_filenames" in self.metadata:
+            self.depth_filenames = self.metadata["depth_filenames"]
+        if "normal_filenames" in self.metadata:
+            self.normal_filenames = self.metadata["normal_filenames"]
         self.depth_unit_scale_factor = self.metadata["depth_unit_scale_factor"]
 
     def get_metadata(self, data: Dict) -> Dict:
@@ -103,7 +108,7 @@ class DepthNormalDataset(InputDataset):
         if self.normal_filenames:
             filepath_normal = self.normal_filenames[data["image_idx"]]
             normal_image = get_depth_normal_image_from_path(
-                filepath=filepath_normal, height=height, width=width, scale_factor=self._dataparser_outputs.dataparser_scale, isDepth=False
+                filepath=filepath_normal, height=height, width=width, scale_factor=scale_factor, isDepth=False
             )
         # compute from depth
         else:
