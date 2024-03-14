@@ -74,10 +74,10 @@ class TranspNerfData(DataParser):
         depth_scale = 1
         scene_box = SceneBox(aabb=torch.tensor([[-1.5, -1.5, -1.5], [1.5, 1.5, 1.5]], dtype=torch.float32))
 
-        #render = "hotdog"
+        render = "hotdog"
         # render = "ficus"
         #render = "wine"
-        render = "coffee"
+        #render = "coffee"
         #render = "spoon"
 
         if render == "hotdog":

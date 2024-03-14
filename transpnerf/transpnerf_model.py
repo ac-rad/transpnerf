@@ -42,8 +42,19 @@ class TranspNerfModel(NerfactoModel):
 
     # TODO: Override any potential functions/methods to implement your own method
     # or subclass from "Model" and define all mandatory fields.
+
+    def _fresnel(self, n, in_dir, out_dir, normal):
+        ## taken from https://github.com/dawning77/NeRRF
+
+        in_dot = (in_dir * normal).sum(-1)
+        out_dot = (out_dir * normal).sum(-1)
+
+        F = ((in_dot - n * out_dot) / (in_dot + n * out_dot)) ** 2 + (
+            (n * in_dot - out_dot) / (n * in_dot + out_dot)
+        ) ** 2
+        return F / 2
     
-    def _reflection(self, ray_bundle: RayBundle):
+    def _reflection(self, ray_bundle: RayBundle, calc_fresnel: bool):
         #print("refl")
         depth = ray_bundle.metadata["depth"]
         normal = ray_bundle.metadata["normal"]
@@ -71,6 +82,18 @@ class TranspNerfModel(NerfactoModel):
         # use only reflected part for now
         ray_bundle.origins[index_mask] = refl_origins.clone()[index_mask]
         ray_bundle.directions[index_mask] = refl_dir.clone()[index_mask].to(ray_bundle.directions.dtype)
+
+
+        #fresenel 
+        if calc_fresnel:
+            ior = 1.5
+            ior_ = 1/ior
+            cos_theta_o = torch.sqrt(1- ior**2 * (1- cos_theta_i**2))
+            refract_dir_1 = -ior_*depth + (ior_*(-cos_theta_i) - cos_theta_o).unsqueeze(-1)*normal
+            refract_dir_1 = refract_dir_1 / torch.norm(refract_dir_1, dim=-1).unsqueeze(-1)
+            fresnel_1 = self._fresnel(ior, input_directions, refract_dir_1, normal)
+            return ray_bundle, fresnel_1, index_mask
+
 
         return ray_bundle
 
@@ -123,11 +146,15 @@ class TranspNerfModel(NerfactoModel):
         
         apply_refl = True
         apply_before = True
+        calc_fresnel = False
         
         if apply_before and apply_refl:
             # apply reflection
             if "depth" in ray_bundle.metadata.keys() and "normal" in ray_bundle.metadata.keys():
-                ray_bundle = self._reflection(ray_bundle)
+                if calc_fresnel:
+                    ray_bundle, fresnel_1, index_mask = self._reflection(ray_bundle, calc_fresnel)
+                else:
+                    ray_bundle = self._reflection(ray_bundle, calc_fresnel)
         
         # proposal sampler
         ray_samples: RaySamples
@@ -163,6 +190,11 @@ class TranspNerfModel(NerfactoModel):
         ray_samples_list.append(ray_samples)
 
         rgb = self.renderer_rgb(rgb=field_outputs[FieldHeadNames.RGB], weights=weights)
+
+        if calc_fresnel:
+            rgb[index_mask] = 1 * rgb[index_mask] #(1 - fresnel_1[index_mask].unsqueeze(-1)) * rgb[index_mask]
+
+
         with torch.no_grad():
             depth = self.renderer_depth(weights=weights, ray_samples=ray_samples)
         expected_depth = self.renderer_expected_depth(weights=weights, ray_samples=ray_samples)
