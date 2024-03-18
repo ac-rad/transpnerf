@@ -66,6 +66,9 @@ class TranspNerfData(DataParser):
 
         print("Generating blender dataset.")
 
+        # note: I did the following to remove ids that the blender dataset generates: 
+        # sudo find . -type f -name '*_0000*' -exec sh -c 'mv "$1" "$(echo "$1" | sed "s/_0000//")"' sh {} \; 
+
         meta = load_from_json(self.data)
         data_dir = self.data.parent
         image_filenames = []
@@ -74,37 +77,18 @@ class TranspNerfData(DataParser):
         depth_scale = 1
         scene_box = SceneBox(aabb=torch.tensor([[-1.5, -1.5, -1.5], [1.5, 1.5, 1.5]], dtype=torch.float32))
 
-        render = "hotdog"
-        # render = "ficus"
-        #render = "wine"
-        #render = "coffee"
-        #render = "spoon"
-
-        if render == "hotdog":
-            data_id = "0029" #hotdog - 200 captures
-        elif render == "ficus":
-            data_id = "0136" # ficus - 200 captures
-        elif render == "wine":
-            data_id = "0090" #transpwine - 40 captures
+        if "wine" in str(data_dir):
             scene_box = SceneBox(aabb=torch.tensor([[-1.5, -1.5, -1], [1.5, 1.5, 2]], dtype=torch.float32)) #shift box z axis
-        elif render == "coffee":
-            data_id = "0000"  #coffee - 40 captures
-        elif render == "spoon":
-            data_id = "0000"
-            scene_box = SceneBox(aabb=torch.tensor([[-1.5, -1.5, -1], [1.5, 1.5, 2]], dtype=torch.float32)) #shift box z axis
-        else:
-            print("error")
-        
 
         poses = []
         random.seed(27)
-        for frame in random.sample(meta["frames"], 40): #meta["frames"]:
+        for frame in meta["frames"]:
             fname = data_dir / Path(frame["file_path"].replace("./", "") + ".png")
             image_filenames.append(fname)
 
             # added normal and depths
-            fname_depth = data_dir / Path(frame["file_path"].replace("./", "") + "_depth_" + data_id + ".png")
-            fname_normal = data_dir / Path(frame["file_path"].replace("./", "") + "_normal_" + data_id + ".png")
+            fname_depth = data_dir / Path(frame["file_path"].replace("./", "") + "_depth.png")
+            fname_normal = data_dir / Path(frame["file_path"].replace("./", "") + "_normal.png")
             normal_filenames.append(fname_normal)
             depth_filenames.append(fname_depth)
             
