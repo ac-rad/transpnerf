@@ -60,6 +60,7 @@ class TranspNerfModelConfig(NerfactoModelConfig):
     apply_refl: bool = True
     calc_fresnel: bool = False
     fresnel_version: int = 1 #in_model - 1, in_field - 0
+    adjust_normal: bool = False
     
 
 class TranspNerfModel(NerfactoModel):
@@ -69,6 +70,8 @@ class TranspNerfModel(NerfactoModel):
 
     def populate_modules(self):
         super().populate_modules()
+
+        print("----- REFLECT Parameters ---",  self.config.apply_refl, self.config.calc_fresnel, self.config.fresnel_version, self.config.adjust_normal)
 
         if self.config.apply_refl and self.config.calc_fresnel and self.config.fresnel_version == 0:
             if self.config.disable_scene_contraction:
@@ -114,13 +117,14 @@ class TranspNerfModel(NerfactoModel):
         ) ** 2
         return F / 2
     
-    def _reflection(self, ray_bundle: RayBundle, calc_fresnel: bool):
+    def _reflection(self, ray_bundle: RayBundle, calc_fresnel: bool, adjust_normal: bool):
         #print("refl")
         input_origins = ray_bundle.origins
         input_directions = ray_bundle.directions
         depth = ray_bundle.metadata["depth"]
-        #normal = ray_bundle.metadata["normal"]
-        normal = self._adjust_normal(ray_bundle.metadata["normal"], input_directions)
+        normal = ray_bundle.metadata["normal"]
+        if adjust_normal:
+            normal = self._adjust_normal(ray_bundle.metadata["normal"], input_directions)
        
         # Generate a mask to exclude the background
         target_tensor = torch.tensor([0., 0., 0.]).cuda()  # target black normal (background)
@@ -128,7 +132,7 @@ class TranspNerfModel(NerfactoModel):
 
         #index_mask = torch.all(depth != 0, dim=1)
 
-        print("index mask True count --> ", torch.sum(index_mask.int()).item())
+        #print("index mask True count --> ", torch.sum(index_mask.int()).item())
         # calculate incident angle
         cos_theta_i = (-input_directions * normal).sum(dim=1) 
 
@@ -169,11 +173,11 @@ class TranspNerfModel(NerfactoModel):
             # apply reflection
             if "depth" in ray_bundle.metadata.keys() and "normal" in ray_bundle.metadata.keys():
                 if self.config.calc_fresnel:
-                    ray_bundle, fresnel_1, index_mask = self._reflection(ray_bundle, self.config.calc_fresnel)
+                    ray_bundle, fresnel_1, index_mask = self._reflection(ray_bundle, self.config.calc_fresnel, self.config.adjust_normal)
                     if self.config.fresnel_version == 0:
                         fresnel_info = {"fresnel": fresnel_1, "index_mask": index_mask}
                 else:
-                    ray_bundle, index_mask = self._reflection(ray_bundle, self.config.calc_fresnel)
+                    ray_bundle, index_mask = self._reflection(ray_bundle, self.config.calc_fresnel, self.config.adjust_normal)
         
         # proposal sampler
         ray_samples: RaySamples

@@ -1,3 +1,4 @@
 transpnerf.egg-info/*
 __pycache__/
 outputs/
+.DS_Store
