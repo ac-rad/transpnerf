@@ -5,7 +5,7 @@ Nicole Streltsov
 ## Brief Overview
 TODO
 
-## Quick start
+## Quickstart
 
 ### 1. Installing Nerfstudio
 
