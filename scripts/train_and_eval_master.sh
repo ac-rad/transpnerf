@@ -5,8 +5,12 @@
 #March 2024
 
 # in workspace folder:
-# ./transpnerf/scripts/train_and_eval_master.sh synthetic
-# ./transpnerf/scripts/train_and_eval_master.sh real
+# nohup ./transpnerf/scripts/train_and_eval_master.sh synthetic &
+# nohup ./transpnerf/scripts/train_and_eval_master.sh real &
+
+# check status: 
+    # ps aux | grep ./transpnerf/scripts/train_and_eval_master.sh
+    # cat nohup.out - to view logging
 
 start_time=$(date +%s)
 
@@ -22,13 +26,14 @@ date
 tag=$(date +'%Y-%m-%d')
 timestamp=$(date "+%Y-%m-%d_%H%M%S")
 method_opts=()
-output_results_folder="output_results_${dataset_type}"
+output_results_folder="output_results_${dataset_type}_hotdog"
 run_nerfacto=1
-run_transpnerf=1
+run_transpnerf=0
+run_excel_create=1
 
 if [ "$dataset_type" = "synthetic" ]; then
-    DATASETS=("hotdog" "coffee" "wine")
-    DATASETS=("wine")
+    #DATASETS=("hotdog" "coffee" "wine")
+    DATASETS=("hotdog")
 else
     DATASETS=()
 fi
@@ -43,6 +48,13 @@ if [ "$run_nerfacto" = "1" ]; then
     method_opts='blender-data'
 
     for dataset in "${DATASETS[@]}"; do
+        if [ "$dataset" = "wine" ]; then
+            # special case: need to adjust the scene_box
+            method_name="transpnerf"
+            prefix="${dataset_type}_NERFACTO"
+            method_opts='--pipeline.model.apply-refl=False'
+        fi
+
         transpnerf/scripts/train_and_eval_each.sh $dataset $method_name $timestamp $tag $method_opts $prefix $output_results_folder
         wait
     done
@@ -53,12 +65,12 @@ if [ "$run_transpnerf" = "1" ]; then
     echo "Running transpnerf...."
     method_name="transpnerf"
     declare -A method_config_dict
-    #method_config_dict["orig"]="orig"
-    #method_config_dict["calc-fresnel-v0"]="--pipeline.model.calc-fresnel=True --pipeline.model.fresnel_version=0"
-    #method_config_dict["calc-fresnel-v1"]="--pipeline.model.calc-fresnel=True --pipeline.model.fresnel-version=1"
+    method_config_dict["orig"]="orig"
+    method_config_dict["calc-fresnel-v0"]="--pipeline.model.calc-fresnel=True --pipeline.model.fresnel_version=0"
+    method_config_dict["calc-fresnel-v1"]="--pipeline.model.calc-fresnel=True --pipeline.model.fresnel-version=1"
     method_config_dict["orig-adjust-normal"]="--pipeline.model.adjust_normal=True"
-    #method_config_dict["calc-fresnel-v0-adjust-normal"]="${method_config_dict["calc-fresnel-v0"]} --pipeline.model.adjust_normal=True"
-    #method_config_dict["calc-fresnel-v1-adjust-normal"]="${method_config_dict["calc-fresnel-v1"]} --pipeline.model.adjust_normal=True"
+    method_config_dict["calc-fresnel-v0-adjust-normal"]="${method_config_dict["calc-fresnel-v0"]} --pipeline.model.adjust_normal=True"
+    method_config_dict["calc-fresnel-v1-adjust-normal"]="${method_config_dict["calc-fresnel-v1"]} --pipeline.model.adjust_normal=True"
 
     for dataset in "${DATASETS[@]}"; do
         for key in "${!method_config_dict[@]}"; do
@@ -77,12 +89,14 @@ echo "----Training, Evaluation, and Render Done.------"
 
 echo "------Creating Excel------"
 
-output_results_folder_final="nerfstudio/scripts/${output_results_folder}/"
-final_results_path="output_evals/final_results_${dataset_type}.xlsx"
-python3 transpnerf/scripts/get_eval_results.py "${output_results_folder_final}" "${final_results_path}"
+if [ "$run_excel_create" = "1" ]; then
+    output_results_folder_final="nerfstudio/scripts/${output_results_folder}/"
+    final_results_path="output_evals/final_results_${dataset_type}_hotdog.xlsx"
+    python3 transpnerf/scripts/get_eval_results.py "${output_results_folder_final}" "${final_results_path}"
 
-wait
-echo "Excel created in $final_results_path"
+    wait
+    echo "Excel created in $final_results_path"
+fi
 
 # find elapsed time of the script
 end_time=$(date +%s)
