@@ -18,12 +18,12 @@ TODO
     docker exec -it <docker process id> /bin/bash
     ```
 - To download this repository to be used with the NerfStudio framework:
-```
-cd nerfstudio/
-git clone git@github.com:NicoleStrel/transpnerf.git
-cd transpnerf/
-pip install -e .
-```
+   ```
+   cd nerfstudio/
+   git clone git@github.com:NicoleStrel/transpnerf.git
+   cd transpnerf/
+   pip install -e .
+   ```
 ### 2. Data 
 
 Two datasets were used: a synthetic dataset made with Blender and a real dataset made with iPhone image frame captures. They can be found below. 
