@@ -32,7 +32,9 @@ Two datasets were used: a synthetic dataset made with Blender and a real dataset
    - Created by the script in `scripts/blender_dataset.py`
    - Train: 40 images, Test: 40 images
    - transforms.json contains the camera angle, poses, and image files
-   - _depth and _normal suffixes define the depth (grayscale) and normals respectively. 
+   - _depth and _normal suffixes define the depth (grayscale) and normals respectively.
+   - To remove the blender generated id's, run
+        - `sudo find . -type f -name '*_0000*' -exec sh -c 'mv "$1" "$(echo "$1" | sed "s/_0000//")"' sh {} \;`
 - [Real Dataset]()
   - 40 images to be used for both test/train
   - Used the nerfstudio command: `ns-process-data images --data {DATA_PATH} --output-dir {PROCESSED_DATA_DIR}` to run [COLMAP](https://github.com/colmap/colmap) to generate poses.
