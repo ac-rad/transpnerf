@@ -2,6 +2,8 @@
 University of Toronto Engineering Science Thesis, April 2024
 Nicole Streltsov
 
+This project is built on [NeRFStudio](https://github.com/nerfstudio-project/nerfstudio).
+
 ## Brief Overview
 TODO
 
