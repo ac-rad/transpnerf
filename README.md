@@ -1,4 +1,4 @@
-# TranspNerf: Neural Radiance Fields for Transparent Objects
+# TranspNeRF: Neural Radiance Fields for Transparent Objects
 University of Toronto Engineering Science Thesis, April 2024
 Nicole Streltsov
 
