@@ -88,17 +88,17 @@ ns-render dataset --load-config="${config_path}" \
 
 wait
 
-# # create point cloud
-# echo "------- Generating point cloud for ${method_name} ${dataset} with timestamp ${timestamp} -------"
-# ns-export pointcloud \
-#     --load-config "${config_path}" \
-#     --output-dir "${output_results}" \
-#     --num-points 1000000 \
-#     --remove-outliers True \
-#     --normal-method model_output \
-#     --normal-output-name normals \
-#     --use-bounding-box True \
-#     --bounding-box-min -1.5 -1.5 -1 \
-#     --bounding-box-max 1.5 1.5 2
+# create point cloud
+echo "------- Generating point cloud for ${method_name} ${dataset} with timestamp ${timestamp} -------"
+ns-export pointcloud \
+    --load-config "${config_path}" \
+    --output-dir "${output_results}" \
+    --num-points 1000000 \
+    --remove-outliers True \
+    --normal-method model_output \
+    --normal-output-name normals \
+    --use-bounding-box True \
+    --bounding-box-min -1.5 -1.5 -1 \
+    --bounding-box-max 1.5 1.5 2
 
-# wait 
+wait 

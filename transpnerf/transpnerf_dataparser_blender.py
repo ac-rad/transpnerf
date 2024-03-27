@@ -28,7 +28,6 @@ from nerfstudio.data.dataparsers.base_dataparser import DataParser, DataParserCo
 from nerfstudio.data.scene_box import SceneBox
 from nerfstudio.utils.colors import get_color
 from nerfstudio.utils.io import load_from_json
-import random
 
 @dataclass
 class TranspNerfDataParserBlenderConfig(DataParserConfig):
@@ -81,7 +80,6 @@ class TranspNerfData(DataParser):
             scene_box = SceneBox(aabb=torch.tensor([[-1.5, -1.5, -1], [1.5, 1.5, 2]], dtype=torch.float32)) #shift box z axis
 
         poses = []
-        random.seed(27)
         for frame in meta["frames"]:
             fname = data_dir / Path(frame["file_path"].replace("./", "") + ".png")
             image_filenames.append(fname)

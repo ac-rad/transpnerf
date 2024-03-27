@@ -1,7 +1,5 @@
 """
 TranspNerf Model File
-
-Currently this subclasses the Nerfacto model. Consider subclassing from the base Model.
 """
 from dataclasses import dataclass, field
 from typing import Type
@@ -20,8 +18,10 @@ from nerfstudio.fields.vanilla_nerf_field import NeRFField
 from nerfstudio.model_components.ray_samplers import PDFSampler
 from nerfstudio.fields.nerfacto_field import NerfactoField
 import math
-
 from transpnerf.transpnerf_field import TranspNerfField
+from nerfstudio.model_components.losses import DepthLossType, depth_loss, depth_ranking_loss
+from nerfstudio.utils import colormaps
+from nerfstudio.model_components import losses
 
 @dataclass
 class TranspNerfModelConfig(NerfactoModelConfig):
@@ -29,6 +29,8 @@ class TranspNerfModelConfig(NerfactoModelConfig):
     """
 
     _target: Type = field(default_factory=lambda: TranspNerfModel)
+    
+    # feild related
     num_importance_samples: int = 128
     """Number of samples in fine field evaluation"""
     use_appearance_embedding: bool = True
@@ -55,12 +57,30 @@ class TranspNerfModelConfig(NerfactoModelConfig):
     """Whether to predict normals or not."""
     use_average_appearance_embedding: bool = True
     """Whether to use average appearance embedding or zeros for inference."""
+    
+    # depth-nerfacto related
+    depth_loss_mult: float = 1e-3
+    """Lambda of the depth loss."""
+    is_euclidean_depth: bool = False
+    """Whether input depth maps are Euclidean distances (or z-distances)."""
+    depth_sigma: float = 0.01
+    """Uncertainty around depth values in meters (defaults to 1cm)."""
+    should_decay_sigma: bool = False
+    """Whether to exponentially decay sigma."""
+    starting_depth_sigma: float = 0.2
+    """Starting uncertainty around depth values in meters (defaults to 0.2m)."""
+    sigma_decay_rate: float = 0.99985
+    """Rate of exponential decay."""
+    depth_loss_type: DepthLossType = DepthLossType.DS_NERF
+    """Depth loss type."""
 
     # transparent related
     apply_refl: bool = True
+    """ Weather to apply reflection equations."""
     calc_fresnel: bool = False
-    fresnel_version: int = 1 #in_model - 1, in_field - 0
-    adjust_normal: bool = False
+    """ Weather to also apply the Fresnel constant"""
+    apply_depth_supervision: bool = False
+    """ Weather to apply depth-nerfacto depth supervision"""
     
 
 class TranspNerfModel(NerfactoModel):
@@ -71,9 +91,10 @@ class TranspNerfModel(NerfactoModel):
     def populate_modules(self):
         super().populate_modules()
 
-        print("----- REFLECT Parameters ---",  self.config.apply_refl, self.config.calc_fresnel, self.config.fresnel_version, self.config.adjust_normal)
+        print("----- REFLECT Parameters --- reflection: ",  self.config.apply_refl, " frensel: ", self.config.calc_fresnel, " depth supervision: ", self.config.apply_depth_supervision)
 
-        if self.config.apply_refl and self.config.calc_fresnel and self.config.fresnel_version == 0:
+        # for fresnel field instantiation
+        if self.config.apply_refl and self.config.calc_fresnel:
             if self.config.disable_scene_contraction:
                 scene_contraction = None
             else:
@@ -99,6 +120,13 @@ class TranspNerfModel(NerfactoModel):
                 average_init_density=self.config.average_init_density,
                 implementation=self.config.implementation,
             )
+        
+        # for depth-nerfacto 
+        if self.config.apply_depth_supervision:
+            if self.config.should_decay_sigma:
+                self.depth_sigma = torch.tensor([self.config.starting_depth_sigma])
+            else:
+                self.depth_sigma = torch.tensor([self.config.depth_sigma])
 
     def _adjust_normal(self, normals, in_dir):
         ## taken from https://github.com/dawning77/NeRRF
@@ -117,13 +145,12 @@ class TranspNerfModel(NerfactoModel):
         ) ** 2
         return F / 2
     
-    def _reflection(self, ray_bundle: RayBundle, calc_fresnel: bool, adjust_normal: bool):
-        #print("refl")
+    def _reflection(self, ray_bundle: RayBundle, calc_fresnel: bool):
         input_origins = ray_bundle.origins
         input_directions = ray_bundle.directions
         depth = ray_bundle.metadata["depth"]
         normal = ray_bundle.metadata["normal"]
-        if adjust_normal:
+        if calc_fresnel:
             normal = self._adjust_normal(ray_bundle.metadata["normal"], input_directions)
        
         # Generate a mask to exclude the background
@@ -173,17 +200,16 @@ class TranspNerfModel(NerfactoModel):
             # apply reflection
             if "depth" in ray_bundle.metadata.keys() and "normal" in ray_bundle.metadata.keys():
                 if self.config.calc_fresnel:
-                    ray_bundle, fresnel_1, index_mask = self._reflection(ray_bundle, self.config.calc_fresnel, self.config.adjust_normal)
-                    if self.config.fresnel_version == 0:
-                        fresnel_info = {"fresnel": fresnel_1, "index_mask": index_mask}
+                    ray_bundle, fresnel_1, index_mask = self._reflection(ray_bundle, self.config.calc_fresnel)
+                    fresnel_info = {"fresnel": fresnel_1, "index_mask": index_mask}
                 else:
-                    ray_bundle, index_mask = self._reflection(ray_bundle, self.config.calc_fresnel, self.config.adjust_normal)
+                    ray_bundle, index_mask = self._reflection(ray_bundle, self.config.calc_fresnel)
         
         # proposal sampler
         ray_samples: RaySamples
         ray_samples, weights_list, ray_samples_list = self.proposal_sampler(ray_bundle, density_fns=self.density_fns)
         
-        if self.config.apply_refl and self.config.calc_fresnel and self.config.fresnel_version == 0:
+        if self.config.apply_refl and self.config.calc_fresnel:
             field_outputs = self.field.forward(ray_samples, compute_normals=self.config.predict_normals, fresnel_info=fresnel_info)
         else:
             field_outputs = self.field.forward(ray_samples, compute_normals=self.config.predict_normals)
@@ -196,10 +222,6 @@ class TranspNerfModel(NerfactoModel):
         ray_samples_list.append(ray_samples)
 
         rgb = self.renderer_rgb(rgb=field_outputs[FieldHeadNames.RGB], weights=weights)
-
-        if self.config.apply_refl and self.config.calc_fresnel and self.config.fresnel_version == 1 and index_mask != None and fresnel_1!= None:
-            fresnel_final = (1 - fresnel_1.unsqueeze(-1)[index_mask]).detach() # detach from computation graph 
-            rgb[index_mask] = rgb[index_mask] * fresnel_final
 
         with torch.no_grad():
             depth = self.renderer_depth(weights=weights, ray_samples=ray_samples)
@@ -236,16 +258,88 @@ class TranspNerfModel(NerfactoModel):
 
         for i in range(self.config.num_proposal_iterations):
             outputs[f"prop_depth_{i}"] = self.renderer_depth(weights=weights_list[i], ray_samples=ray_samples_list[i])
+        
+        if self.config.apply_depth_supervision and ray_bundle.metadata is not None and "directions_norm" in ray_bundle.metadata:
+            outputs["directions_norm"] = ray_bundle.metadata["directions_norm"]
+
         return outputs
     
     def get_metrics_dict(self, outputs, batch):
         metrics_dict = super().get_metrics_dict(outputs, batch)
+
+        if self.config.apply_depth_supervision and self.training:
+            if (
+                losses.FORCE_PSEUDODEPTH_LOSS
+                and self.config.depth_loss_type not in losses.PSEUDODEPTH_COMPATIBLE_LOSSES
+            ):
+                raise ValueError(
+                    f"Forcing pseudodepth loss, but depth loss type ({self.config.depth_loss_type}) must be one of {losses.PSEUDODEPTH_COMPATIBLE_LOSSES}"
+                )
+            if self.config.depth_loss_type in (DepthLossType.DS_NERF, DepthLossType.URF):
+                metrics_dict["depth_loss"] = 0.0
+                sigma = self._get_sigma().to(self.device)
+                termination_depth = batch["depth_image"].to(self.device)
+                for i in range(len(outputs["weights_list"])):
+                    metrics_dict["depth_loss"] += depth_loss(
+                        weights=outputs["weights_list"][i],
+                        ray_samples=outputs["ray_samples_list"][i],
+                        termination_depth=termination_depth,
+                        predicted_depth=outputs["expected_depth"],
+                        sigma=sigma,
+                        directions_norm=outputs["directions_norm"],
+                        is_euclidean=self.config.is_euclidean_depth,
+                        depth_loss_type=self.config.depth_loss_type,
+                    ) / len(outputs["weights_list"])
+            elif self.config.depth_loss_type in (DepthLossType.SPARSENERF_RANKING,):
+                metrics_dict["depth_ranking"] = depth_ranking_loss(
+                    outputs["expected_depth"], batch["depth_image"].to(self.device)
+                )
+            else:
+                raise NotImplementedError(f"Unknown depth loss type {self.config.depth_loss_type}")
+
         return metrics_dict
     
     def get_loss_dict(self, outputs, batch, metrics_dict=None):
         loss_dict = super().get_loss_dict(outputs, batch, metrics_dict)
+        if self.config.apply_depth_supervision and self.training:
+            assert metrics_dict is not None and ("depth_loss" in metrics_dict or "depth_ranking" in metrics_dict)
+            if "depth_ranking" in metrics_dict:
+                loss_dict["depth_ranking"] = (
+                    self.config.depth_loss_mult
+                    * np.interp(self.step, [0, 2000], [0, 0.2])
+                    * metrics_dict["depth_ranking"]
+                )
+            if "depth_loss" in metrics_dict:
+                loss_dict["depth_loss"] = self.config.depth_loss_mult * metrics_dict["depth_loss"]
         return loss_dict
     
     def get_image_metrics_and_images(self, outputs: Dict[str, torch.Tensor], batch: Dict[str, torch.Tensor]) -> Tuple[Dict[str, float], Dict[str, torch.Tensor]]:
         metrics, images = super().get_image_metrics_and_images(outputs, batch)
+
+        if self.config.apply_depth_supervision:
+            ground_truth_depth = batch["depth_image"].to(self.device)
+            if not self.config.is_euclidean_depth:
+                ground_truth_depth = ground_truth_depth * outputs["directions_norm"]
+
+            ground_truth_depth_colormap = colormaps.apply_depth_colormap(ground_truth_depth)
+            predicted_depth_colormap = colormaps.apply_depth_colormap(
+                outputs["depth"],
+                accumulation=outputs["accumulation"],
+                near_plane=float(torch.min(ground_truth_depth).cpu()),
+                far_plane=float(torch.max(ground_truth_depth).cpu()),
+            )
+            images["depth"] = torch.cat([ground_truth_depth_colormap, predicted_depth_colormap], dim=1)
+            depth_mask = ground_truth_depth > 0
+            metrics["depth_mse"] = float(
+                torch.nn.functional.mse_loss(outputs["depth"][depth_mask], ground_truth_depth[depth_mask]).cpu()
+            )
         return metrics, images
+    
+    def _get_sigma(self):
+        if not self.config.should_decay_sigma:
+            return self.depth_sigma
+
+        self.depth_sigma = torch.maximum(
+            self.config.sigma_decay_rate * self.depth_sigma, torch.tensor([self.config.depth_sigma])
+        )
+        return self.depth_sigma

@@ -14,8 +14,6 @@ from scipy.spatial import cKDTree
 import open3d as o3d
 import imageio
 
-# to install: openpyxl, numba
-
 def min_max_normalize(depth_array):
     if np.max(depth_array) - np.min(depth_array) == 0:
         print("error. something went wrong with the depth generation.")
@@ -29,6 +27,16 @@ def compute_l2_norm(depth_array_gt, depth_array_est):
     diff = depth_array_gt - depth_array_est
     return np.sqrt(np.sum(diff ** 2))
 
+def test_depth_files(input_folder, render_folder):
+    est_depth_folder = f"{input_folder}{render_folder}/test/raw-depth"
+    for root, dirs, files in os.walk(est_depth_folder):
+        for file_name in files:
+            est_depth = os.path.join(root, file_name)
+
+            with gzip.open(est_depth, 'rb') as f:
+                depth_array_est = 1 / np.load(f)
+                depth_array_est = min_max_normalize(depth_array_est)
+    
 def depth_error_calc(id_depth, depth_pngs):
     [est_depth, gt_depth] = depth_pngs
     
@@ -139,12 +147,16 @@ def compare_point_clouds(gt_depths, est_pt_cloud_ply, dataset_name):
         # remove outliers, apply to bounding box, and select max num_points
         pcd, ind = gt_point_cloud.remove_statistical_outlier(nb_neighbors=20, std_ratio=10)
         filtered_points_np = np.asarray(pcd.points)
-
-        min_coords = np.min(filtered_points_np, axis=0)
-        max_coords = np.max(filtered_points_np, axis=0)
-        scale_factors = np.abs([1 / (max_coords[i] - min_coords[i]) for i in range(3)])
-        scaled_points = (filtered_points_np - min_coords) * scale_factors * 2 - 1
         
+        # scale v1
+        # min_coords = np.min(filtered_points_np, axis=0)
+        # max_coords = np.max(filtered_points_np, axis=0)
+        # scale_factors = np.abs([1 / (max_coords[i] - min_coords[i]) for i in range(3)])
+        # scaled_points = (filtered_points_np - min_coords) * scale_factors * 2 - 1
+        
+        # scale v2
+        scaled_points = filtered_points_np/1e-3
+
         # mask = np.all((filtered_points_np > comp_l) & (filtered_points_np < comp_m), axis=-1)
         # filtered_points_masked = filtered_points_np[mask]
 
@@ -154,7 +166,6 @@ def compare_point_clouds(gt_depths, est_pt_cloud_ply, dataset_name):
         gt_filtered = o3d.geometry.PointCloud()
         gt_filtered.points = o3d.utility.Vector3dVector(scaled_points)
 
-        print("len --> ", len(gt_filtered.points))
         o3d.io.write_point_cloud(gt_filepath, gt_filtered)
         print(f"created point cloud for dataset {dataset_name}")
     else:
@@ -173,6 +184,7 @@ def jsons_to_excel(input_folder, output_excel):
     
     df = pd.DataFrame()
     df["Metrics"] = ["psnr", "ssim", "lpips", "num_rays_per_sec", "depth_avg_err_m", "chamfer_dist"]
+    test_depth = False # test if depths generated correctly
 
     for json_file in json_files:
         with open(json_file) as f:
@@ -181,12 +193,18 @@ def jsons_to_excel(input_folder, output_excel):
 
         if results:
             file_name = os.path.basename(json_file)
+
             render_folder = file_name.replace(".json", "")
+
+            print("-------- render: ", render_folder, " ------------- ")
             
             # get depth data and calculate depth errpr
             depth_err = 0
-            depth_files, gt_depths, dataset_name = get_depth_files(input_folder, render_folder)
-            depth_err = depth_error_all(depth_files)
+            if test_depth:
+                test_depth_files(input_folder, render_folder)
+            else:
+                depth_files, gt_depths, dataset_name = get_depth_files(input_folder, render_folder)
+                depth_err = depth_error_all(depth_files)
 
             # point cloud comparison
             chamfer_dist = 0
@@ -196,10 +214,6 @@ def jsons_to_excel(input_folder, output_excel):
             # else:
             #     print("Estimated point cloud was not created. ")
 
-
-            # to try:
-            # remove the sclaing
-            # instead, divide by 1e-3 to scale? and still keep estimated points
 
             df[file_name] = [results["psnr"], results["ssim"], results["lpips"], results["num_rays_per_sec"], depth_err, chamfer_dist]
 

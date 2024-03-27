@@ -1,7 +1,7 @@
 # """
 # TranspNerf Nerfstudio Field
 
-# Currently this subclasses the NerfactoField. Consider subclassing the base Field.
+# Note: this is only used with the calc_fresnel option.
 # """
 
 from typing import Dict, Literal, Optional, Tuple

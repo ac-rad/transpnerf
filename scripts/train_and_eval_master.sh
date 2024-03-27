@@ -26,14 +26,14 @@ date
 tag=$(date +'%Y-%m-%d')
 timestamp=$(date "+%Y-%m-%d_%H%M%S")
 method_opts=()
-output_results_folder="output_results_${dataset_type}_hotdog"
-run_nerfacto=1
-run_transpnerf=0
+output_results_folder="output_results_${dataset_type}_V3"
+run_nerfacto=0
+run_transpnerf=1
 run_excel_create=1
 
 if [ "$dataset_type" = "synthetic" ]; then
     #DATASETS=("hotdog" "coffee" "wine")
-    DATASETS=("hotdog")
+    DATASETS=("coffee" "wine")
 else
     DATASETS=()
 fi
@@ -65,12 +65,12 @@ if [ "$run_transpnerf" = "1" ]; then
     echo "Running transpnerf...."
     method_name="transpnerf"
     declare -A method_config_dict
+    method_config_dict["nerfacto"]="--pipeline.model.apply_refl=False"
+    method_config_dict["nerfacto-depth"]="--pipeline.model.apply_refl=False --pipeline.model.apply-depth-supervision=True"
     method_config_dict["orig"]="orig"
-    method_config_dict["calc-fresnel-v0"]="--pipeline.model.calc-fresnel=True --pipeline.model.fresnel_version=0"
-    method_config_dict["calc-fresnel-v1"]="--pipeline.model.calc-fresnel=True --pipeline.model.fresnel-version=1"
-    method_config_dict["orig-adjust-normal"]="--pipeline.model.adjust_normal=True"
-    method_config_dict["calc-fresnel-v0-adjust-normal"]="${method_config_dict["calc-fresnel-v0"]} --pipeline.model.adjust_normal=True"
-    method_config_dict["calc-fresnel-v1-adjust-normal"]="${method_config_dict["calc-fresnel-v1"]} --pipeline.model.adjust_normal=True"
+    method_config_dict["orig-fresnel"]="--pipeline.model.calc-fresnel=True"
+    method_config_dict["orig-depth"]="--pipeline.model.apply_depth_supervision=True"
+    method_config_dict["orig-fresnel-depth"]="--pipeline.model.calc-fresnel=True --pipeline.model.apply-depth-supervision=True"
 
     for dataset in "${DATASETS[@]}"; do
         for key in "${!method_config_dict[@]}"; do
@@ -87,18 +87,20 @@ fi
 
 echo "----Training, Evaluation, and Render Done.------"
 
-echo "------Creating Excel------"
-
 if [ "$run_excel_create" = "1" ]; then
+    echo "--- Install Dependancies for Excel Creation Script ---"
+    pip install openpyxl numba
+
+    echo "------Creating Excel------"
     output_results_folder_final="nerfstudio/scripts/${output_results_folder}/"
-    final_results_path="output_evals/final_results_${dataset_type}_hotdog.xlsx"
+    final_results_path="output_evals/final_results_${dataset_type}_V3.xlsx"
     python3 transpnerf/scripts/get_eval_results.py "${output_results_folder_final}" "${final_results_path}"
 
     wait
     echo "Excel created in $final_results_path"
 fi
 
-# find elapsed time of the script
+# elapsed time of the script
 end_time=$(date +%s)
 elapsed_time=$((end_time - start_time))
 echo "Elapsed time: $elapsed_time seconds"
