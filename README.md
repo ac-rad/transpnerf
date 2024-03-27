@@ -49,7 +49,7 @@ As well, Nerfstudio has the option to create and use any dataset with instructio
 
 To run TranspNeRF on the synthetic dataset: 
 
-`ns-train transpnerf --pipeline.model.background-color white --pipeline.model.disable-scene-contraction True --pipeline.model.proposal-initial-sampler uniform --pipeline.model.near-plane 2. --pipeline.model.far-plane 6. --pipeline.model.use-average-appearance-embedding False --pipeline.model.distortion-loss-mult 0 --data {dataset folder path}/transforms.json
+`ns-train transpnerf --pipeline.model.background-color white --pipeline.model.disable-scene-contraction True --pipeline.model.proposal-initial-sampler uniform --pipeline.model.near-plane 2. --pipeline.model.far-plane 6. --pipeline.model.use-average-appearance-embedding False --pipeline.model.distortion-loss-mult 0 --data {dataset folder path}/transforms.json`
 
 Note: the near and far planes for the wine glass work best if set to 6 and 9 respectively. 
 
@@ -59,7 +59,10 @@ To run TranspNeRF on the real dataset:
 
 ### 4. Running the evaluation script
 
-The evaluation procedure runs the training, evaluation metric script (`ns-eval`), creates the output depths, and output point clouds. 
+The evaluation procedure runs the training, evaluation metric script (`ns-eval`), creates the output depths from the test image dataset, and output point clouds. 
 
-
-
+- To run: `./transpnerf/scripts/train_and_eval_master.sh {dataset type}` - dataset type is either `synthetic` or `real`
+- To run as a background task: `nohup ./transpnerf/scripts/train_and_eval_master.sh synthetic &`
+       - check status: `ps aux | grep ./transpnerf/scripts/train_and_eval_master.sh`
+       - view logging: `cat nohup.out`
+The python script `get_eval_results.py` called in this master shell script will create an excel file with the metrics: psnr, ssim, lpips, number of rays per second, and the average depth error in meters. 
