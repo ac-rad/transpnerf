@@ -63,6 +63,6 @@ The evaluation procedure runs the training, evaluation metric script (`ns-eval`)
 
 - To run: `./transpnerf/scripts/train_and_eval_master.sh {dataset type}` - dataset type is either `synthetic` or `real`
 - To run as a background task: `nohup ./transpnerf/scripts/train_and_eval_master.sh synthetic &`
-       - check status: `ps aux | grep ./transpnerf/scripts/train_and_eval_master.sh`
-       - view logging: `cat nohup.out`
+    -  check status: `ps aux | grep ./transpnerf/scripts/train_and_eval_master.sh`
+    -  view logging: `cat nohup.out`
 The python script `get_eval_results.py` called in this master shell script will create an excel file with the metrics: psnr, ssim, lpips, number of rays per second, and the average depth error in meters. 
