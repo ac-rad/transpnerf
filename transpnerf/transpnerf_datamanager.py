@@ -72,27 +72,6 @@ class TranspNerfDataManager(VanillaDataManager, Generic[TDataset]):
             dataparser_outputs=self.dataparser.get_dataparser_outputs(split=self.test_split),
             scale_factor=self.config.camera_res_scale_factor,
         )
-  
-    # def new_sampling(self, batch):
-    #     mask = batch["mask"]
-    #     batch_size = 4096 #self.num_rays_per_batch #4096
-    #     nonzero_indices = torch.nonzero(mask[...], as_tuple=False)
-    #     chosen_indices = random.sample(range(len(nonzero_indices)), k=batch_size)
-    #     indices = nonzero_indices[chosen_indices]
-    #     print("indices.shape ---> ", indices.shape)
-
-    #     c, y, x = (i.flatten() for i in torch.split(indices, 1, dim=-1))
-    #     c, y, x = c.cpu(), y.cpu(), x.cpu()
-            
-    #     collated_batch = {
-    #         key: value[c, y, x] for key, value in batch.items() if key != "image_idx" and value is not None
-    #     }
-
-    #     # Needed to correct the random indices to their actual camera idx locations.
-    #     indices[:, 0] = batch["image_idx"][c]
-    #     collated_batch["indices"] = indices  # with the abs camera indices
-
-    #     return collated_batch
 
     def next_train(self, step: int) -> Tuple[RayBundle, Dict]:
         """Returns the next batch of data from the train dataloader."""
@@ -101,26 +80,19 @@ class TranspNerfDataManager(VanillaDataManager, Generic[TDataset]):
         assert self.train_pixel_sampler is not None
         assert isinstance(image_batch, dict)
 
-        # apply a mask to sample rays intersecting object:
-        # if "normal_image" in image_batch:
-        #     normals = image_batch["normal_image"]
-        #     reshaped_tensor = normals.permute(0, 3, 1, 2).contiguous()
-        #     mask = torch.zeros(reshaped_tensor.shape[:3], dtype=torch.bool, device=normals.device)
-        #     nonzero_mask = torch.any(reshaped_tensor != torch.tensor([0, 0, 0], device=normals.device).unsqueeze(0).unsqueeze(-1).unsqueeze(-1), dim=1)
-        #     final_mask = nonzero_mask #.view(-1, 1)
-        #     image_batch["mask"] = final_mask.int()
-
         batch = self.train_pixel_sampler.sample(image_batch)
-        #batch = self.new_sampling(image_batch)
         ray_indices = batch["indices"]
-        #print("ray_indices size --> ", ray_indices.size())
         ray_bundle = self.train_ray_generator(ray_indices)
 
+        # print("image shape --> ", image_batch["image"].shape)
+        # print("ray_indices shape --> ", ray_indices.shape)
+        # print("depth shape --> ", image_batch["depth_image"].shape)
+        # print("normal shape --> ", image_batch["normal_image"].shape)
         # add on normal and depth metadata
         if "depth_image" in image_batch:
-            ray_bundle.metadata["depth"] =  self._process_depth_normal_metadata(ray_indices, image_batch["depth_image"]) #batch["depth_image"]
+            ray_bundle.metadata["depth"] =  self._process_depth_normal_metadata(ray_indices, image_batch["depth_image"])
         if "normal_image" in image_batch:
-            ray_bundle.metadata["normal"] = self._process_depth_normal_metadata(ray_indices, image_batch["normal_image"]) #batch["normal_image"]
+            ray_bundle.metadata["normal"] = self._process_depth_normal_metadata(ray_indices, image_batch["normal_image"])
         
         return ray_bundle, batch
 
@@ -129,8 +101,12 @@ class TranspNerfDataManager(VanillaDataManager, Generic[TDataset]):
         # https://github.com/nerfstudio-project/nerfstudio/blob/45db2bcfabe6e0644a3a45a50ed80a9a685ddc34/nerfstudio/data/pixel_samplers.py#L239
 
         # c - camera indices, y - row indicies, x - column indicies
-
         c, y, x = (i.flatten() for i in torch.split(ray_indices, 1, dim=-1))
+        # print("c max: ", torch.max(c), torch.min(c))
+        # print("y max: ", torch.max(y), torch.min(y))
+        # print("x max: ", torch.max(x), torch.min(x))
+        # print("shapes: ", c.shape, y.shape, x.shape)
+        # print(data.is_contiguous())
         c, y, x = c.cpu(), y.cpu(), x.cpu()
         return data[c, x, y]
 

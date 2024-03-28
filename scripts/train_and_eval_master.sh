@@ -26,14 +26,13 @@ date
 tag=$(date +'%Y-%m-%d')
 timestamp=$(date "+%Y-%m-%d_%H%M%S")
 method_opts=()
-output_results_folder="output_results_${dataset_type}_V3"
+output_results_folder="output_results_${dataset_type}_V4"
 run_nerfacto=0
 run_transpnerf=1
 run_excel_create=1
 
 if [ "$dataset_type" = "synthetic" ]; then
-    #DATASETS=("hotdog" "coffee" "wine")
-    DATASETS=("coffee" "wine")
+    DATASETS=("hotdog" "coffee" "wine")
 else
     DATASETS=()
 fi
@@ -93,7 +92,7 @@ if [ "$run_excel_create" = "1" ]; then
 
     echo "------Creating Excel------"
     output_results_folder_final="nerfstudio/scripts/${output_results_folder}/"
-    final_results_path="output_evals/final_results_${dataset_type}_V3.xlsx"
+    final_results_path="output_evals/final_results_${dataset_type}_V4.xlsx"
     python3 transpnerf/scripts/get_eval_results.py "${output_results_folder_final}" "${final_results_path}"
 
     wait

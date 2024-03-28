@@ -19,15 +19,10 @@ output_results_folder="$7"
 
 near_plane=2.0
 far_plane=6.0
-trans_file="/transforms.json"
 
 if [[ "$dataset" == "wine" ]]; then
     near_plane=6.0
     far_plane=9.0
-fi
-
-if [ "$method_name" = "nerfacto" ]; then
-    trans_file=""
 fi
 
 if [[ "$5" == "orig" ]]; then
@@ -59,7 +54,7 @@ ns-train "${method_name}" \
     --pipeline.datamanager.train-num-rays-per-batch=8192 \
     --pipeline.datamanager.eval-num-rays-per-batch=8192 \
     "${method_opts[@]}" \
-    --data="../../data/blender/${dataset}${trans_file}" \
+    --data="../../data/blender/${dataset}/" \
 
 wait
 

@@ -61,14 +61,14 @@ class TranspNerfData(DataParser):
         else:
             self.alpha_color_tensor = None
 
-    def _generate_dataparser_outputs(self, split="test"): # test set which includes normals and depths
+    def _generate_dataparser_outputs(self, split="train"): # test set which includes normals and depths
 
         print("Generating blender dataset.")
 
         # note: I did the following to remove ids that the blender dataset generates: 
         # sudo find . -type f -name '*_0000*' -exec sh -c 'mv "$1" "$(echo "$1" | sed "s/_0000//")"' sh {} \; 
 
-        meta = load_from_json(self.data)
+        meta = load_from_json(self.data / f"transforms_{split}.json")
         data_dir = self.data.parent
         image_filenames = []
         normal_filenames = []
@@ -76,17 +76,17 @@ class TranspNerfData(DataParser):
         depth_scale = 1
         scene_box = SceneBox(aabb=torch.tensor([[-1.5, -1.5, -1.5], [1.5, 1.5, 1.5]], dtype=torch.float32))
 
-        if "wine" in str(data_dir):
+        if "wine" in str(self.data):
             scene_box = SceneBox(aabb=torch.tensor([[-1.5, -1.5, -1], [1.5, 1.5, 2]], dtype=torch.float32)) #shift box z axis
 
         poses = []
         for frame in meta["frames"]:
-            fname = data_dir / Path(frame["file_path"].replace("./", "") + ".png")
+            fname = self.data / Path(frame["file_path"].replace("./", "") + ".png")
             image_filenames.append(fname)
 
             # added normal and depths
-            fname_depth = data_dir / Path(frame["file_path"].replace("./", "") + "_depth.png")
-            fname_normal = data_dir / Path(frame["file_path"].replace("./", "") + "_normal.png")
+            fname_depth = self.data / Path(frame["file_path"].replace("./", "") + "_depth.png")
+            fname_normal = self.data / Path(frame["file_path"].replace("./", "") + "_normal.png")
             normal_filenames.append(fname_normal)
             depth_filenames.append(fname_depth)
             
