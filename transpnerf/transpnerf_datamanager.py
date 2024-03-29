@@ -59,7 +59,7 @@ class TranspNerfDataManager(VanillaDataManager, Generic[TDataset]):
 
     def create_train_dataset(self):
         """Sets up the data loaders for training"""
-        # print("self.dataset_type -->", self.dataset_type)  # for now, hardcoding since the datset type is not changing
+        # for now, hardcoding since the datset type is not changing
 
         return DepthNormalDataset(
             dataparser_outputs=self.train_dataparser_outputs,
@@ -84,10 +84,6 @@ class TranspNerfDataManager(VanillaDataManager, Generic[TDataset]):
         ray_indices = batch["indices"]
         ray_bundle = self.train_ray_generator(ray_indices)
 
-        # print("image shape --> ", image_batch["image"].shape)
-        # print("ray_indices shape --> ", ray_indices.shape)
-        # print("depth shape --> ", image_batch["depth_image"].shape)
-        # print("normal shape --> ", image_batch["normal_image"].shape)
         # add on normal and depth metadata
         if "depth_image" in image_batch:
             ray_bundle.metadata["depth"] =  self._process_depth_normal_metadata(ray_indices, image_batch["depth_image"])
@@ -100,13 +96,7 @@ class TranspNerfDataManager(VanillaDataManager, Generic[TDataset]):
         # this code is exactly what is happening in: 
         # https://github.com/nerfstudio-project/nerfstudio/blob/45db2bcfabe6e0644a3a45a50ed80a9a685ddc34/nerfstudio/data/pixel_samplers.py#L239
 
-        # c - camera indices, y - row indicies, x - column indicies
         c, y, x = (i.flatten() for i in torch.split(ray_indices, 1, dim=-1))
-        # print("c max: ", torch.max(c), torch.min(c))
-        # print("y max: ", torch.max(y), torch.min(y))
-        # print("x max: ", torch.max(x), torch.min(x))
-        # print("shapes: ", c.shape, y.shape, x.shape)
-        # print(data.is_contiguous())
         c, y, x = c.cpu(), y.cpu(), x.cpu()
-        return data[c, x, y]
+        return data[c, y, x] # x, y
 

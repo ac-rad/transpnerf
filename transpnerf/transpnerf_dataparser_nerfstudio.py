@@ -167,8 +167,9 @@ class TranspNerfNerfstudio(DataParser):
                 )
 
             # added: depth filenames
-            fname_depth = data_dir / Path(frame["file_path"].replace("images", "depths").replace(".jpeg", "") + "_depth.png")
-            depth_filenames.append(fname_depth)
+            depth_filepath = Path(frame["file_path"].replace("images", "depths").replace(".jpeg", ".png"))
+            depth_fname = self._get_fname(depth_filepath, data_dir, downsample_folder_prefix="depths_")
+            depth_filenames.append(depth_fname)
 
             image_filenames.append(fname)
             poses.append(np.array(frame["transform_matrix"]))

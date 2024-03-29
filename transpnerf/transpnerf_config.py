@@ -11,9 +11,6 @@ from transpnerf.transpnerf_datamanager import (
     TranspNerfDataManagerConfig,
 )
 from transpnerf.transpnerf_model import TranspNerfModelConfig
-# from transpnerf.transpnerf_pipeline import (
-#     TranspNerfPipelineConfig,
-# )
 from nerfstudio.configs.base_config import ViewerConfig
 from nerfstudio.data.dataparsers.nerfstudio_dataparser import NerfstudioDataParserConfig
 from transpnerf.transpnerf_dataparser_blender import TranspNerfDataParserBlenderConfig
@@ -43,7 +40,7 @@ transpnerf_method = MethodSpecification(
         pipeline=VanillaPipelineConfig(
             datamanager=TranspNerfDataManagerConfig( 
                 _target=TranspNerfDataManager[DepthNormalDataset],
-                dataparser= TranspNerfDataParserBlenderConfig(), #TranspNerfNerfstudioDataParserConfig(), 
+                dataparser= TranspNerfNerfstudioDataParserConfig(), #TranspNerfDataParserBlenderConfig(), #, # 
                 train_num_rays_per_batch=4096,
                 eval_num_rays_per_batch=4096,
             ),
