@@ -5,8 +5,8 @@
 #March 2024
 
 # in workspace folder:
-# nohup ./transpnerf/scripts/train_and_eval_master.sh synthetic &
-# nohup ./transpnerf/scripts/train_and_eval_master.sh real &
+# nohup ./transpnerf/scripts/train_and_eval_master.sh synthetic synthetic_final_results &
+# nohup ./transpnerf/scripts/train_and_eval_master.sh real real_final_results_FINAL &
 
 # check status: 
     # ps aux | grep ./transpnerf/scripts/train_and_eval_master.sh
@@ -16,53 +16,24 @@ start_time=$(date +%s)
 
 # get the input parameters for the script
 if [ $# -eq 0 ]; then
-    echo "Usage: $0 <dataset type>"
+    echo "Usage: $0 <dataset type> <output_results_folder>"
     exit 1
 fi
 
 dataset_type="$1"
+output_results_folder="$2"
 
 date
 tag=$(date +'%Y-%m-%d')
 timestamp=$(date "+%Y-%m-%d_%H%M%S")
 method_opts=()
-output_results_folder="output_results_${dataset_type}_V4"
-run_nerfacto=0
+
 run_transpnerf=1
 run_excel_create=1
 
 if [ "$dataset_type" = "synthetic" ]; then
     DATASETS=("hotdog" "coffee" "wine")
-else
-    DATASETS=()
-fi
 
-echo "------Training and Evaluating Synthetic datasets------"
-
-# 1) NERFACTO
-if [ "$run_nerfacto" = "1" ]; then
-    echo "Running nerfacto...."
-    prefix="${dataset_type}_orig"
-    method_name="nerfacto"
-    method_opts='blender-data'
-
-    for dataset in "${DATASETS[@]}"; do
-        if [ "$dataset" = "wine" ]; then
-            # special case: need to adjust the scene_box
-            method_name="transpnerf"
-            prefix="${dataset_type}_NERFACTO"
-            method_opts='--pipeline.model.apply-refl=False'
-        fi
-
-        transpnerf/scripts/train_and_eval_each.sh $dataset $method_name $timestamp $tag $method_opts $prefix $output_results_folder
-        wait
-    done
-fi
-
-# 2) TRANSPNERF
-if [ "$run_transpnerf" = "1" ]; then
-    echo "Running transpnerf...."
-    method_name="transpnerf"
     declare -A method_config_dict
     method_config_dict["nerfacto"]="--pipeline.model.apply_refl=False"
     method_config_dict["nerfacto-depth"]="--pipeline.model.apply_refl=False --pipeline.model.apply-depth-supervision=True"
@@ -71,13 +42,39 @@ if [ "$run_transpnerf" = "1" ]; then
     method_config_dict["orig-depth"]="--pipeline.model.apply_depth_supervision=True"
     method_config_dict["orig-fresnel-depth"]="--pipeline.model.calc-fresnel=True --pipeline.model.apply-depth-supervision=True"
 
+else
+    DATASETS=("bottle" "glass")
+    #DATASETS=("glass")
+
+    declare -A method_config_dict
+    method_config_dict["nerfacto"]="--pipeline.model.apply_refl=False"
+    method_config_dict["nerfacto-depth-any"]="--pipeline.model.apply_refl=False --pipeline.model.apply-depth-supervision=True"
+    method_config_dict["nerfacto-depth-zoe"]="--pipeline.model.apply_refl=False --pipeline.model.apply-depth-supervision=True --pipeline.datamanager.use-zoe-depth=True --pipeline.model.depth-loss-type=SPARSENERF_RANKING"
+    method_config_dict["orig-any"]="orig"
+    method_config_dict["orig-zoe"]="--pipeline.datamanager.use-zoe-depth=True --pipeline.model.depth-loss-type=SPARSENERF_RANKING"
+    method_config_dict["orig-fresnel-any"]="--pipeline.model.calc-fresnel=True"
+    method_config_dict["orig-fresnel-any-zoe"]="--pipeline.model.calc-fresnel=True --pipeline.datamanager.use-zoe-depth=True --pipeline.model.depth-loss-type=SPARSENERF_RANKING"
+    method_config_dict["orig-depth-any"]="--pipeline.model.apply_depth_supervision=True"
+    method_config_dict["orig-depth-zoe"]="--pipeline.model.apply_depth_supervision=True --pipeline.datamanager.use-zoe-depth=True --pipeline.model.depth-loss-type=SPARSENERF_RANKING"
+    method_config_dict["orig-fresnel-depth-any"]="--pipeline.model.calc-fresnel=True --pipeline.model.apply-depth-supervision=True"
+    method_config_dict["orig-fresnel-depth-zoe"]="--pipeline.model.calc-fresnel=True --pipeline.model.apply-depth-supervision=True --pipeline.datamanager.use-zoe-depth=True --pipeline.model.depth-loss-type=SPARSENERF_RANKING"
+
+fi
+
+echo "------Training and Evaluating Synthetic datasets------"
+
+# TRANSPNERF
+if [ "$run_transpnerf" = "1" ]; then
+    echo "Running transpnerf...."
+    method_name="transpnerf"
+
     for dataset in "${DATASETS[@]}"; do
         for key in "${!method_config_dict[@]}"; do
             echo "Prefix: $key, method-opts: ${method_config_dict[$key]}"
             prefix="${dataset_type}_$key"
             method_opts="${method_config_dict[$key]}"
 
-            transpnerf/scripts/train_and_eval_each.sh $dataset $method_name $timestamp $tag "$method_opts" $prefix $output_results_folder
+            transpnerf/scripts/train_and_eval_each.sh $dataset $method_name $timestamp $tag "$method_opts" $prefix $output_results_folder $dataset_type
             wait
         done
     done
@@ -92,7 +89,7 @@ if [ "$run_excel_create" = "1" ]; then
 
     echo "------Creating Excel------"
     output_results_folder_final="nerfstudio/scripts/${output_results_folder}/"
-    final_results_path="output_evals/final_results_${dataset_type}_V4.xlsx"
+    final_results_path="output_evals/${output_results_folder}.xlsx"
     python3 transpnerf/scripts/get_eval_results.py "${output_results_folder_final}" "${final_results_path}"
 
     wait

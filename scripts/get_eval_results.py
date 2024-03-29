@@ -17,8 +17,9 @@ import imageio
 def min_max_normalize(depth_array):
     if np.max(depth_array) - np.min(depth_array) == 0:
         print("error. something went wrong with the depth generation.")
-        print("depth_array: --> ", depth_array)
-        print("max, min: --> ", np.max(depth_array), np.min(depth_array))
+        # print("depth_array: --> ", depth_array)
+        # print("max, min: --> ", np.max(depth_array), np.min(depth_array))
+        return np.array([])
     
     return (depth_array - np.min(depth_array)) / (np.max(depth_array) - np.min(depth_array))
 
@@ -48,8 +49,14 @@ def depth_error_calc(id_depth, depth_pngs):
     with gzip.open(est_depth, 'rb') as f:
         depth_array_est = 1 / np.load(f)
         depth_array_est = min_max_normalize(depth_array_est)
-    norm = compute_l2_norm(depth_array_gt, depth_array_est) #np.linalg.norm(depth_array_gt - depth_array_est)
-    return norm
+        if depth_array_est.ndim == 3:
+            depth_array_est = np.squeeze(depth_array_est, axis=2)
+    
+    if depth_array_est.size != 0:
+        norm = compute_l2_norm(depth_array_gt, depth_array_est) 
+        return norm
+    else:
+        return -100000 # a clear indication something went wrong
 
 def depth_error_all(depth_files):
     l2_norms = []
@@ -63,10 +70,17 @@ def depth_error_all(depth_files):
 def get_depth_files(input_folder, render_folder):
     [dataset_type, prefix, method_name, dataset_name, date, time] = render_folder.split("_")
     depth_files = {} #key: id, value: [est depth, gt depth]
-    gt_pattern = re.compile(r'r_(\d+)_depth\.png')
-    est_pattern = re.compile(r'r_(\d+)\.npy\.gz')
-    gt_depths = []
+    
+    if dataset_type == "synthetic":
+        gt_pattern = re.compile(r'r_(\d+)_depth\.png')
+        est_pattern = re.compile(r'r_(\d+)\.npy\.gz')
+        gt_depth_folder= f"data/blender/{dataset_name}/test"
+    else:
+        gt_pattern = re.compile(r'frame_(\d+)\.png')
+        est_pattern = re.compile(r'frame_(\d+)\.npy\.gz')
+        gt_depth_folder = f"data/nerfstudio/{dataset_name}/depths_4"
 
+    gt_depths = []
     # estimated depths
     est_depth_folder = f"{input_folder}{render_folder}/test/raw-depth"
     for root, dirs, files in os.walk(est_depth_folder):
@@ -76,10 +90,6 @@ def get_depth_files(input_folder, render_folder):
             depth_files[id_depth] = [est_depth_path]
 
     # ground truth depths
-    gt_depth_folder = ""
-    if dataset_type == "synthetic":
-        gt_depth_folder= f"data/blender/{dataset_name}/test"
-    
     for root, dirs, files in os.walk(gt_depth_folder):
         for file_name in files:
             gt_match = gt_pattern.match(file_name)

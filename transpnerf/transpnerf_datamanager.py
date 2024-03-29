@@ -30,7 +30,8 @@ class TranspNerfDataManagerConfig(VanillaDataManagerConfig):
     """
 
     _target: Type = field(default_factory=lambda: TranspNerfDataManager)
-
+    use_zoe_depth: bool = False
+    """Weather to use Zoe depth or not"""
 
 TDataset = TypeVar("TDataset", bound=InputDataset, default=InputDataset)
 
@@ -64,6 +65,7 @@ class TranspNerfDataManager(VanillaDataManager, Generic[TDataset]):
         return DepthNormalDataset(
             dataparser_outputs=self.train_dataparser_outputs,
             scale_factor=self.config.camera_res_scale_factor,
+            use_zoe_depth=self.config.use_zoe_depth,
         )
     
     def create_eval_dataset(self):
@@ -71,6 +73,7 @@ class TranspNerfDataManager(VanillaDataManager, Generic[TDataset]):
         return DepthNormalDataset(
             dataparser_outputs=self.dataparser.get_dataparser_outputs(split=self.test_split),
             scale_factor=self.config.camera_res_scale_factor,
+            use_zoe_depth=self.config.use_zoe_depth,
         )
 
     def next_train(self, step: int) -> Tuple[RayBundle, Dict]:

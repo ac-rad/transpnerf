@@ -252,7 +252,7 @@ class TranspNerfField(NerfactoField):
             index_mask = fresnel_info["index_mask"]
             fresnel_final = 1 - fresnel_info["fresnel"].unsqueeze(1).unsqueeze(2).expand(-1, 48, 3)[index_mask].clone().detach()
             new_rgb = (rgb[index_mask].clone() * fresnel_final).to(torch.float16) #.detach()
-            rgb_clone = rgb.clone()
+            rgb_clone = rgb.clone().to(torch.float16)
             rgb_clone[index_mask] = new_rgb
             rgb = rgb_clone
 
