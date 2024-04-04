@@ -23,6 +23,7 @@ from nerfstudio.model_components.losses import DepthLossType, depth_loss, depth_
 from nerfstudio.utils import colormaps
 from nerfstudio.model_components import losses
 import numpy as np
+from nerfstudio.field_components.spatial_distortions import SceneContraction
 
 @dataclass
 class TranspNerfModelConfig(NerfactoModelConfig):
@@ -94,6 +95,12 @@ class TranspNerfModel(NerfactoModel):
 
         print("----- REFLECT Parameters --- reflection: ",  self.config.apply_refl, " frensel: ", self.config.calc_fresnel, " depth supervision: ", self.config.apply_depth_supervision)
 
+        if self.config.apply_refl and self.config.calc_fresnel:
+            if self.config.disable_scene_contraction:
+                scene_contraction = None
+            else:
+                scene_contraction = SceneContraction(order=float("inf"))
+
         # for fresnel field instantiation
         if self.config.apply_refl and self.config.calc_fresnel:  
             appearance_embedding_dim = self.config.appearance_embed_dim if self.config.use_appearance_embedding else 0
@@ -108,7 +115,7 @@ class TranspNerfModel(NerfactoModel):
                 log2_hashmap_size=self.config.log2_hashmap_size,
                 hidden_dim_color=self.config.hidden_dim_color,
                 hidden_dim_transient=self.config.hidden_dim_transient,
-                spatial_distortion=None,
+                spatial_distortion=scene_contraction,
                 num_images=self.num_train_data,
                 use_pred_normals=self.config.predict_normals,
                 use_average_appearance_embedding=self.config.use_average_appearance_embedding,
@@ -173,7 +180,7 @@ class TranspNerfModel(NerfactoModel):
 
         #fresenel 
         if calc_fresnel:
-            ior = 1.5
+            ior = 1.5 #1
             ior_ = 1/ior
             cos_theta_o = torch.sqrt(1 - (ior_**2) * (1- cos_theta_i**2))
             refract_dir_1 = ior_ * input_directions + (ior_*cos_theta_i - cos_theta_o).unsqueeze(-1)*normal

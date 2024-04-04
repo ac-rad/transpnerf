@@ -32,32 +32,33 @@ run_transpnerf=1
 run_excel_create=1
 
 if [ "$dataset_type" = "synthetic" ]; then
-    DATASETS=("hotdog" "coffee" "wine")
+    #DATASETS=("hotdog" "coffee" "wine")
+    DATASETS=("wine")
 
     declare -A method_config_dict
-    method_config_dict["nerfacto"]="--pipeline.model.apply_refl=False"
-    method_config_dict["nerfacto-depth"]="--pipeline.model.apply_refl=False --pipeline.model.apply-depth-supervision=True"
-    method_config_dict["orig"]="orig"
+    # method_config_dict["nerfacto"]="--pipeline.model.apply_refl=False"
+    # method_config_dict["nerfacto-depth"]="--pipeline.model.apply_refl=False --pipeline.model.apply-depth-supervision=True"
+    # method_config_dict["orig"]="orig"
     method_config_dict["orig-fresnel"]="--pipeline.model.calc-fresnel=True"
-    method_config_dict["orig-depth"]="--pipeline.model.apply_depth_supervision=True"
-    method_config_dict["orig-fresnel-depth"]="--pipeline.model.calc-fresnel=True --pipeline.model.apply-depth-supervision=True"
+    # method_config_dict["orig-depth"]="--pipeline.model.apply_depth_supervision=True"
+    # method_config_dict["orig-fresnel-depth"]="--pipeline.model.calc-fresnel=True --pipeline.model.apply-depth-supervision=True"
 
 else
-    DATASETS=("bottle" "glass")
-    #DATASETS=("glass")
+    #DATASETS=("bottle" "glass")
+    DATASETS=("glass")
 
     declare -A method_config_dict
     method_config_dict["nerfacto"]="--pipeline.model.apply_refl=False"
-    method_config_dict["nerfacto-depth-any"]="--pipeline.model.apply_refl=False --pipeline.model.apply-depth-supervision=True"
-    method_config_dict["nerfacto-depth-zoe"]="--pipeline.model.apply_refl=False --pipeline.model.apply-depth-supervision=True --pipeline.datamanager.use-zoe-depth=True --pipeline.model.depth-loss-type=SPARSENERF_RANKING"
+    #method_config_dict["nerfacto-depth-any"]="--pipeline.model.apply_refl=False --pipeline.model.apply-depth-supervision=True"
+    #method_config_dict["nerfacto-depth-zoe"]="--pipeline.model.apply_refl=False --pipeline.model.apply-depth-supervision=True --pipeline.datamanager.use-zoe-depth=True --pipeline.model.depth-loss-type=SPARSENERF_RANKING"
     method_config_dict["orig-any"]="orig"
-    method_config_dict["orig-zoe"]="--pipeline.datamanager.use-zoe-depth=True --pipeline.model.depth-loss-type=SPARSENERF_RANKING"
+    #method_config_dict["orig-zoe"]="--pipeline.datamanager.use-zoe-depth=True --pipeline.model.depth-loss-type=SPARSENERF_RANKING"
     method_config_dict["orig-fresnel-any"]="--pipeline.model.calc-fresnel=True"
-    method_config_dict["orig-fresnel-any-zoe"]="--pipeline.model.calc-fresnel=True --pipeline.datamanager.use-zoe-depth=True --pipeline.model.depth-loss-type=SPARSENERF_RANKING"
+    #method_config_dict["orig-fresnel-any-zoe"]="--pipeline.model.calc-fresnel=True --pipeline.datamanager.use-zoe-depth=True --pipeline.model.depth-loss-type=SPARSENERF_RANKING"
     method_config_dict["orig-depth-any"]="--pipeline.model.apply_depth_supervision=True"
-    method_config_dict["orig-depth-zoe"]="--pipeline.model.apply_depth_supervision=True --pipeline.datamanager.use-zoe-depth=True --pipeline.model.depth-loss-type=SPARSENERF_RANKING"
+    #method_config_dict["orig-depth-zoe"]="--pipeline.model.apply_depth_supervision=True --pipeline.datamanager.use-zoe-depth=True --pipeline.model.depth-loss-type=SPARSENERF_RANKING"
     method_config_dict["orig-fresnel-depth-any"]="--pipeline.model.calc-fresnel=True --pipeline.model.apply-depth-supervision=True"
-    method_config_dict["orig-fresnel-depth-zoe"]="--pipeline.model.calc-fresnel=True --pipeline.model.apply-depth-supervision=True --pipeline.datamanager.use-zoe-depth=True --pipeline.model.depth-loss-type=SPARSENERF_RANKING"
+    #method_config_dict["orig-fresnel-depth-zoe"]="--pipeline.model.calc-fresnel=True --pipeline.model.apply-depth-supervision=True --pipeline.datamanager.use-zoe-depth=True --pipeline.model.depth-loss-type=SPARSENERF_RANKING"
 
 fi
 

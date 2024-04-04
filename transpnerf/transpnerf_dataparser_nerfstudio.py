@@ -210,6 +210,7 @@ class TranspNerfNerfstudio(DataParser):
         elif has_split_files_spec:
             raise RuntimeError(f"The dataset's list of filenames for split {split} is missing.")
         else:
+            self.config.train_split_fraction = 1
             # find train and eval indices based on the eval_mode specified
             if self.config.eval_mode == "fraction":
                 i_train, i_eval = get_train_eval_split_fraction(image_filenames, self.config.train_split_fraction)
@@ -228,7 +229,7 @@ class TranspNerfNerfstudio(DataParser):
             if split == "train":
                 indices = i_train
             elif split in ["val", "test"]:
-                indices = i_eval
+                indices = i_train
             else:
                 raise ValueError(f"Unknown dataparser split {split}")
 
