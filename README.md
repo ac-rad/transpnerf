@@ -1,11 +1,11 @@
 # TranspNeRF: Neural Radiance Fields for Transparent Objects
-University of Toronto Engineering Science Thesis, April 2024
-Nicole Streltsov
+University of Toronto Engineering Science Thesis, April 2024, Nicole Streltsov
 
 This project is built on [NeRFStudio](https://github.com/nerfstudio-project/nerfstudio).
 
 ## Brief Overview
-TODO
+
+TranspNeRF builds off the Nerfacto method as a baseline and adds ray bending to better mimic how light behaves when striking transparent objects. After rays are created from the camera centres, the reflected rays are calculated starting from the surface of the object. During training, the radiance of the field outputs are modified with a Fresnel constant to model the refractive effect. This requires the index of refraction (an input variable) and the first refracted ray. These modifications aim to improve the reconstruction of transparent objects by reducing noise. 
 
 ## Quickstart
 
@@ -15,7 +15,7 @@ TODO
 - I suggest following Nerfstudio's [Docker image Installation](https://github.com/nerfstudio-project/nerfstudio/blob/main/docs/quickstart/installation.md#use-docker-image) method as there are fewer dependency conflicts.
    - I found that using docker run with docker exec worked best for me. Here are the commands I used after pulling the `main` docker image:
     ```
-    sudo docker run --gpus all -v /home/nicole/nerfstudio:/workspace/    -p 7007:7007  -it  -d --shm-size=12gb dromni/nerfstudio:main
+    sudo docker run --gpus all -v <nerfstudio repo location>:/workspace/    -p 7007:7007  -it  -d --shm-size=12gb dromni/nerfstudio:main
     docker ps 
     docker exec -it <docker process id> /bin/bash
     ```
@@ -83,3 +83,5 @@ Please consider citing if you utilize this work:
   howpublished = {Bachelor of Applied Science in Engineering Science Thesis, University of Toronto},
 }
 ```
+
+Feel free to email streltsovnicole@gmail.com if you have any questions.
