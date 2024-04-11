@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="description"
+        content="Transparent Object Reconstruction For Chemistry Robotics Applications Utilizing Neural Radiance Fields">
+  <meta name="keywords" content="TranspNeRF, NeRF">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TranspNerf: Neural Radiance Fields for Transparent Objects</title>
+
+  <link href="https://fonts.googleapis.com/css?family=Google+Sans|Noto+Sans|Castoro"
+        rel="stylesheet">
+
+  <link rel="stylesheet" href="./static/css/bulma.min.css">
+  <link rel="stylesheet" href="./static/css/index.css">
+  <link rel="icon" href="./static/images/favicon.ico">
+</head>
+<body>
+
+
+<section class="hero">
+  <div class="hero-body">
+    <div class="container is-max-desktop">
+      <div class="columns is-centered">
+        <div class="column has-text-centered">
+          <h1 class="title is-1 publication-title">TranspNeRF: Transparent Object Reconstruction For Chemistry Robotics Applications Utilizing Neural Radiance Fields</h1>
+          <div class="is-size-5 publication-authors">
+            <br>
+            <span class="author-block">
+              <a href="https://www.nicolestreltsov.com/">Nicole Streltsov</a></span>
+          </div>
+        <br>
+          <div class="is-size-5 publication-authors">
+            <span class="author-block">University of Toronto</span>
+          </div>
+          <div class="is-size-5 publication-authors">
+            <span class="author-block">Engineering Science BASc. Thesis</span>
+          </div>
+          <div class="is-size-5 publication-authors">
+            <span class="author-block">April 2024</span>
+          </div>
+          <br>
+
+          <div class="column has-text-centered">
+            <div class="publication-links">
+              <!-- PDF Link. -->
+              <span class="link-block">
+                <a href=""
+                   class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon">
+                      <i class="fas fa-file-pdf"></i>
+                  </span>
+                  <span>Paper</span>
+                </a>
+              </span>
+              <!-- Code Link. -->
+              <span class="link-block">
+                <a href="https://github.com/ac-rad/transpnerf"
+                   class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon">
+                      <i class="fab fa-github"></i>
+                  </span>
+                  <span>Code</span>
+                  </a>
+              </span>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+    <div class="container is-max-desktop">
+
+    <div class="columns is-centered">
+        <div class="column">
+            <div class="content">
+            <center><p>Nerfacto</p></center>
+            </div>
+        </div>
+    
+        
+        <div class="column">
+            <div class="columns is-centered">
+            <div class="column content">
+                <center><p>TranspNeRF</p></center>
+            </div>
+    
+            </div>
+        </div>
+        </div>
+    
+        <div class="columns is-centered">
+            <div class="column">
+              <div class="content">
+                <img src="./static/images/wine-nerfacto.gif" alt="wine nerfacto">
+              </div>
+            </div>
+      
+            
+            <div class="column">
+              <div class="columns is-centered">
+                <div class="column content">
+                    <img src="./static/images/wine-transpnerf.gif" alt="wine transpnerf">
+                </div>
+      
+              </div>
+            </div>
+          </div>
+  
+      <div class="columns is-centered">
+        <div class="column">
+          <div class="content">
+            <img src="./static/images/glass-nerfacto.gif" alt="glass nerfacto">
+          </div>
+        </div>
+  
+        
+        <div class="column">
+          <div class="columns is-centered">
+            <div class="column content">
+                <img src="./static/images/glass-transpnerf.gif" alt="glass transpnerf">
+            </div>
+  
+          </div>
+        </div>
+      </div>
+
+     
+
+    </div>
+</section>
+
+<section class="section">
+  <div class="container is-max-desktop">
+    <!-- Abstract. -->
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-four-fifths">
+        <h2 class="title is-3">Abstract</h2>
+        <div class="content has-text-justified">
+          <p>
+            Transparent objects pose a significant challenge for robot manipulation due to reflection, refraction, and dispersion of light. In chemistry robotics, objects like vials and beakers are necessary to be manoeuvred to perform lab tasks by the robot autonomously. To reconstruct these objects, Neural Radiance Fields (NeRFs) have demonstrated the potential of using neural networks by casting rays to capture fine details of 3D objects. However, since rays are modelled as straight paths and transparent objects are view-dependent, NeRFs struggle to model them accurately. Current methods encounter challenges with computational intensity, speed, and framework flexibility to be used in various scenarios. To combat these gaps, this method bends rays when striking the object to mimic the behaviour of light rays. The Nerfacto method is used as a baseline for flexibility, reflected rays are calculated, and the Fresnel constant is applied to capture some refractive effect. This ray-bending method was tested on both synthetic and non-synthetic opaque and transparent object scenes. It was found that these reflected rays aid in removing noise and artefacts in the final reconstruction. As well, depth supervision with ground truth depths typically available in robotics is added for further improvement in results. This method enhanced reconstruction for transparent objects, which, in turn, aids robot grasping algorithms in detecting and manipulating these objects in lab settings.
+          </p>
+        </div>
+      </div>
+    </div>
+    <!--/ Abstract. -->
+    <br></br>
+    <!-- Paper Results. -->
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-four-fifths">
+        <h2 class="title is-3">Reconstruction Results</h2>
+        <p>Below are rgb, depth, and normal reconstruction results for method variations performed in the paper.</p>
+        <br>
+        <img src="./static/images/rgb_compare.png" alt="rgb compare"/>
+        <br></br><br></br>
+        <img src="./static/images/depth_compare.png" alt="rgb compare"/>
+        <br></br><br></br>
+        <img src="./static/images/normal_compare.png" alt="rgb compare"/>
+      </div>
+    </div>
+    <!--/ Paper Results. -->
+  </div>
+</section>
+
+<section class="section" id="BibTeX">
+  <div class="container is-max-desktop content">
+    <h2 class="title">BibTeX</h2>
+    <pre><code>@misc{Streltsov2024,
+        author = {Streltsov, Nicole},
+        title = {Transparent Object Reconstruction For Chemistry Robotics Applications Utilizing Neural Radiance Fields},
+        year = {2024},
+        month = {April},
+        howpublished = {Bachelor of Applied Science in Engineering Science Thesis, University of Toronto},
+      }</code></pre>
+  </div>
+</section>
+
+
+<footer class="footer">
+  <div class="container">
+    <div class="columns is-centered">
+      <div class="column is-8">
+        <div class="content">
+            <center>
+            <p>
+                Website template based on <a
+                href="https://github.com/nerfies/nerfies.github.io">Nerfies</a>.
+            </p>
+            </center>
+        </div>
+      </div>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
